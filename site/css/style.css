@@ -122,6 +122,25 @@ cite { font-style: italic; }
   color: var(--manila);
   text-shadow: 0 2px 0 rgba(0, 0, 0, .45), 0 0 34px rgba(240, 164, 58, .28);
 }
+/* Small red "beta" tag pinned at an angle to the bottom-right of the wordmark. */
+.wordmark-text { position: relative; display: inline-block; }
+.beta {
+  position: absolute;
+  right: -.12em;
+  bottom: -.3em;
+  transform: rotate(-7deg);
+  padding: .2em .5em .14em;
+  background: var(--stamp-red);
+  color: var(--manila-light);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(.8rem, 1.6vw + .3rem, 1.1rem);
+  line-height: 1;
+  letter-spacing: .06em;
+  border-radius: 2px;
+  text-shadow: none;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .45);
+}
 .tagline span { display: block; }
 .tagline {
   grid-column: 1;
