@@ -27,7 +27,7 @@ export function h(tag, attrs = {}, ...children) {
 }
 
 // ---------------------------------------------------------------- storage
-const KEY = "parahumandle:v1";
+const KEY = "parahumandle:v1";   // storage key kept from the game's first name so saved progress carries over
 let memory = {};
 
 export const store = {

@@ -1,4 +1,4 @@
-/* Parahumandle — a PRT case file on a night riverfront.
+/* Wormdle — a PRT case file on a night riverfront.
    Two typefaces: Big Shoulders Display (civic, condensed) for names and stamps,
    Courier Prime (typewriter) for everything written on the file. */
 
@@ -122,6 +122,7 @@ cite { font-style: italic; }
   color: var(--manila);
   text-shadow: 0 2px 0 rgba(0, 0, 0, .45), 0 0 34px rgba(240, 164, 58, .28);
 }
+.tagline span { display: block; }
 .tagline {
   grid-column: 1;
   margin: 10px 0 0;

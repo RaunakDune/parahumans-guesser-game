@@ -74,7 +74,7 @@ class RealWorkbook(unittest.TestCase):
     def test_builds_and_answers_are_complete(self):
         game = bd.build(bd.find_workbook(None), dt.datetime(2026, 10, 18, 12, tzinfo=UTC), quiet=True)
         data = json.loads(bd.OUT_PATH.read_text(encoding="utf-8"))
-        self.assertEqual(data["title"], "Parahumandle")
+        self.assertEqual(data["title"], "Wormdle")
         by_id = {c["id"]: c for c in data["capes"]}
         fields = [c["field"] for c in data["clues"]]
         self.assertEqual(len(fields), 6)

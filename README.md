@@ -1,7 +1,8 @@
-# Parahumandle
+# Wormdle
 
 A daily guessing game for Wildbow's *Worm* and *Ward*. Each day there's a redacted PRT file on a cape; every wrong
-guess lifts another black bar until you name them.
+guess lifts another black bar until you name them. Players are greeted as WEDGDG (Watchdog) agents, each with their
+own agent number.
 
 **Play:** https://raunakdune.github.io/parahumans-guesser-game/ (after the one-time setup below)
 

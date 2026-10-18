@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the game's data file from the Parahumandle Excel workbook.
+"""Build Wormdle's data file from the Excel workbook in data/.
 
     python scripts/build_data.py            # build site/data/game.json
     python scripts/build_data.py --check    # validate only, write nothing
@@ -458,7 +458,7 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
                      "players will see a stand-in for that day")
 
     game = {
-        "title": "Parahumandle",
+        "title": "Wormdle",
         "generated": now_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "source": workbook.name,
         "config": {
