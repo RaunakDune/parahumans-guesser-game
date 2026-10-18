@@ -360,7 +360,7 @@ main {
 .ruled-out s { color: var(--ink); text-decoration-thickness: 2px; text-decoration-color: var(--stamp-red); }
 
 /* ---------------------------------------------------------------- lineup grid */
-.lineup { width: 100%; min-width: 30rem; border-collapse: collapse; margin: 12px 0 0; font-size: var(--s-1); table-layout: fixed; }
+.lineup { width: 100%; min-width: 39rem; border-collapse: collapse; margin: 12px 0 0; font-size: var(--s-1); table-layout: fixed; }
 .lineup th { text-align: left; font-family: var(--display); font-weight: 500; font-size: var(--s0); line-height: 1.05; color: var(--ink-soft); padding: 0 4px 6px; vertical-align: bottom; }
 .lineup th:first-child { width: 22%; }
 .lineup td { padding: 3px; vertical-align: top; }
@@ -369,7 +369,8 @@ main {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-height: 54px;
+  height: 68px;          /* every tile the same size, whatever it says */
+  overflow: hidden;
   padding: 6px 6px 5px;
   border-radius: 2px;
   color: #fff;
@@ -395,6 +396,7 @@ main {
 /* Values with a long word (Slaughterhouse, Protectorate) step down a size so they fit the tile. */
 .tile-value { display: block; }
 .tile-long .tile-value { font-size: .82em; line-height: 1.1; }
+.tile-xlong .tile-value { font-size: .7em; line-height: 1.05; }
 
 /* ---------------------------------------------------------------- stamp */
 .stamp {
