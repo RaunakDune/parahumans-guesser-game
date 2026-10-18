@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parahumandle</title>
+<meta name="description" content="A daily guessing game for Worm and Ward. Read the redacted PRT file and name the cape.">
+<meta name="theme-color" content="#0f2233">
+<meta property="og:title" content="Parahumandle">
+<meta property="og:description" content="Read the redacted PRT file and name the cape. A daily guessing game for Worm and Ward.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://raunakdune.github.io/parahumans-guesser-game/assets/og-image.png">
+<meta property="og:url" content="https://raunakdune.github.io/parahumans-guesser-game/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/courier-prime-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/big-shoulders-display-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<div class="scene" aria-hidden="true"></div>
+
+<header class="masthead">
+  <h1 class="wordmark">Parahumandle</h1>
+  <p class="tagline">Read the redacted PRT file. Name the cape.</p>
+  <nav class="masthead-actions" aria-label="Game menu">
+    <button type="button" class="icon-button" data-open="help">How to play</button>
+    <button type="button" class="icon-button" data-open="stats">Stats</button>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="folder">
+    <div class="tabs" role="tablist" aria-label="Game mode">
+      <button role="tab" type="button" class="tab" id="tab-dossier" data-mode="dossier" aria-controls="sheet">Dossier</button>
+      <button role="tab" type="button" class="tab" id="tab-lineup" data-mode="lineup" aria-controls="sheet">Lineup</button>
+      <button role="tab" type="button" class="tab" id="tab-power" data-mode="power" aria-controls="sheet">Power file</button>
+    </div>
+    <section class="sheet" id="sheet" role="tabpanel" aria-live="off">
+      <p class="loading">Pulling the file…</p>
+    </section>
+  </div>
+  <div id="after" class="after"></div>
+</main>
+
+<footer class="colophon">
+  <p>An unofficial fan game. <cite>Worm</cite> and <cite>Ward</cite> are by Wildbow (J.C. McCrae);
+     read them free at <a href="https://parahumans.wordpress.com/">parahumans.wordpress.com</a> and
+     <a href="https://www.parahumans.net/">parahumans.net</a>.
+     Cape details adapted from the <a href="https://worm.fandom.com/wiki/Worm_Wiki">Worm Wiki</a> (CC BY-SA).</p>
+  <p id="data-stamp" class="data-stamp"></p>
+</footer>
+
+<div class="sr-only" id="announcer" aria-live="polite"></div>
+
+<dialog id="dialog-help" class="memo" aria-labelledby="help-title">
+  <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
+  <h2 id="help-title">How to play</h2>
+  <p>Every day there's a new cape from <cite>Worm</cite> or <cite>Ward</cite> to identify, in three files.</p>
+  <h3>Dossier</h3>
+  <p>The file starts fully redacted. Each wrong guess removes one black bar, in this order:
+     <span id="help-clues"></span>. You have <span id="help-guesses">7</span> guesses.</p>
+  <h3>Lineup</h3>
+  <p>Guess any cape and see how they compare with the target on the same six details.
+     A green check means it matches. An amber mark means close: the power classes overlap.
+     A red cross means no match. Guess as many times as you need.</p>
+  <h3>Power file</h3>
+  <p>Read a description of the cape's power with their names blacked out.
+     Wrong guesses open extra notes about the cape.</p>
+  <h3>A few rules</h3>
+  <ul>
+    <li>Names, cape names and civilian names all count. Skitter, Weaver and Taylor Hebert are the same answer.</li>
+    <li>Status means where things stand at the end of <cite>Ward</cite>. Team means the last team the cape belonged to.</li>
+    <li>New files arrive at <span id="help-reset">midnight CET</span>. Missed one? Open it from the archive.</li>
+  </ul>
+</dialog>
+
+<dialog id="dialog-stats" class="memo" aria-labelledby="stats-title">
+  <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
+  <h2 id="stats-title">Your record</h2>
+  <div id="stats-body"></div>
+</dialog>
+
+<dialog id="dialog-spoilers" class="memo memo-warning" aria-labelledby="spoiler-title">
+  <h2 id="spoiler-title">Spoilers for all of Worm and Ward</h2>
+  <p>The answers come from both stories, start to finish. The clues include who ends up dead,
+     which side a cape ends up on, and secret identities.</p>
+  <p>If you're still reading, you may want to come back later.</p>
+  <form method="dialog" class="memo-actions">
+    <button value="ok" class="button button-primary">I've read them, let me play</button>
+  </form>
+</dialog>
+</body>
+</html>

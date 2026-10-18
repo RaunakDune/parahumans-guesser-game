@@ -1,0 +1,13 @@
+# Built from the spreadsheet by scripts/build_data.py (CI builds it on every push)
+site/data/
+
+# Excel lock files and OS clutter
+~$*.xlsx
+.~lock.*
+.DS_Store
+Thumbs.db
+
+__pycache__/
+*.pyc
+build.log
+node_modules/
