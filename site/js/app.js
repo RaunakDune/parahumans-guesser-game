@@ -616,7 +616,7 @@ function renderStats(mode) {
         })),
     ];
   }
-  body.replaceChildren(switcher, tiles, chart);
+  body.replaceChildren(switcher, tiles, ...[chart].flat());
 }
 
 // ---------------------------------------------------------------- chrome
