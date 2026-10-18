@@ -1,4 +1,4 @@
-// Parahumandle — guess the cape from a redacted PRT file.
+// Wormdle — guess the cape from a redacted PRT file.
 // Data comes from data/game.json, which scripts/build_data.py builds from the Excel workbook.
 
 import {
@@ -66,6 +66,7 @@ async function load() {
   if (MODES[fromHash]) state.mode = fromHash;
 
   fillHelp();
+  greetAgent();
   const updated = new Date(game.generated);
   $("#data-stamp").textContent =
     `Files updated ${updated.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}. ` +
@@ -528,7 +529,7 @@ function nextFileText() {
 
 function shareText(puzzle) {
   const { mode, progress, answer, number } = puzzle;
-  const title = `Parahumandle ${MODES[mode].tab} #${number}`;
+  const title = `Wormdle ${MODES[mode].tab} #${number}`;
   let grid;
   let score;
   if (mode === "lineup") {
@@ -675,7 +676,7 @@ function maybeWarnSpoilers() {
   dialog.addEventListener("close", () => {
     store.data.spoilersOk = true;
     store.save();
-    $("#guess-input")?.focus();
+    $("#guess-input")?.focus({ preventScroll: true });
   }, { once: true });
   openDialog(dialog);
 }
@@ -684,6 +685,15 @@ function fillHelp() {
   $("#help-clues").textContent = game.clues.map((c) => c.label.toLowerCase()).join(", ");
   $("#help-guesses").textContent = game.config.maxGuesses;
   $("#help-reset").textContent = game.config.resetLabel.toLowerCase();
+}
+
+// Each player gets a Watchdog (WEDGDG) agent number that stays the same between visits.
+function greetAgent() {
+  if (!store.data.agent) {
+    store.data.agent = 1000 + Math.floor(Math.random() * 9000);
+    store.save();
+  }
+  $("#agent-line").textContent = `Welcome, WEDGDG Agent #${store.data.agent}.`;
 }
 
 function announce(text) {
