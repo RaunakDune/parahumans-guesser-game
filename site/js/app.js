@@ -364,10 +364,13 @@ function renderLineup(puzzle) {
       h("td", { class: "who" }, guess.name),
       game.clues.map((clue) => {
         const result = compareField(clue.field, guess, answer);
+        // Allow a line break after each "/" in multi-team names.
+        const value = display(clue.field, guess).replace(/\//g, "/\u200b");
+        const longest = Math.max(...value.split(/[\s/]+/).map((w) => w.replace(/\u200b/g, "").length));
         return h("td", {},
-          h("div", { class: `tile tile-${result}`, title: `${clue.label} ${MARK_WORD[result]}` },
+          h("div", { class: `tile tile-${result}${longest > 10 ? " tile-long" : ""}`, title: `${clue.label} ${MARK_WORD[result]}` },
             h("span", { class: "tile-mark", "aria-hidden": "true" }, MARK[result]),
-            h("span", {}, display(clue.field, guess)),
+            h("span", { class: "tile-value" }, value),
             h("span", { class: "sr-only" }, `, ${MARK_WORD[result]}`)));
       }));
   });

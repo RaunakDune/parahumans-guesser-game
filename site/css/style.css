@@ -376,7 +376,9 @@ main {
   font-weight: 500;
   font-size: var(--s0);
   line-height: 1.05;
-  overflow-wrap: normal;
+  min-width: 0;
+  overflow-wrap: break-word;   /* last resort for a word that still won't fit */
+  hyphens: auto;
 }
 .tile-mark { font-weight: 700; font-size: var(--s0); line-height: 1; }
 .tile-match { background: var(--match); }
@@ -389,6 +391,9 @@ main {
 .lineup-legend .k-miss::before { background: var(--miss); }
 .lineup-scroll { overflow-x: auto; position: relative; }
 .tile { position: relative; }
+/* Values with a long word (Slaughterhouse, Protectorate) step down a size so they fit the tile. */
+.tile-value { display: block; }
+.tile-long .tile-value { font-size: .82em; line-height: 1.1; }
 
 /* ---------------------------------------------------------------- stamp */
 .stamp {
