@@ -134,6 +134,12 @@ function maxGuesses(mode) {
   return MODES[mode].limited ? game.config.maxGuesses : Infinity;
 }
 
+// A cape's file is complete when it qualifies as a daily answer: every clue filled in and checked
+// by scripts/build_data.py. This is recomputed from the spreadsheet on every build.
+function isIncomplete(cape) {
+  return !(cape.pool || []).includes("dossier");
+}
+
 function sameCape(a, b) {
   return a && b && (a.id === b.id || a.group === b.group);
 }
@@ -362,7 +368,8 @@ function renderLineup(puzzle) {
     const guess = byId.get(id);
     if (!guess) return null;
     return h("tr", {},
-      h("td", { class: "who" }, guess.name),
+      h("td", { class: "who" }, guess.name,
+        isIncomplete(guess) ? h("span", { class: "who-note" }, "File incomplete") : ""),
       game.clues.map((clue) => {
         const result = compareField(clue.field, guess, answer);
         // Allow a line break after each "/" in multi-team names.
@@ -437,7 +444,10 @@ function guessForm(puzzle) {
     list.replaceChildren(...options.map((o, i) => h("li", {
       id: `opt-${i}`, role: "option", class: "option", "aria-selected": String(i === active),
       onmousedown: (e) => { e.preventDefault(); choose(i); },
-    }, h("span", {}, o.cape.name), o.isAlias && fold(o.label) !== fold(o.cape.name) ? h("small", {}, o.label) : "")));
+    }, h("span", {}, o.cape.name),
+       h("span", { class: "option-notes" },
+         o.isAlias && fold(o.label) !== fold(o.cape.name) ? h("small", {}, o.label) : "",
+         isIncomplete(o.cape) ? h("small", { class: "incomplete" }, "File incomplete") : ""))));
     list.hidden = !options.length;
     input.setAttribute("aria-expanded", String(!!options.length));
     if (active >= 0) {

@@ -346,6 +346,9 @@ main {
 .listbox[hidden] { display: none; }
 .option { padding: 7px 10px; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; }
 .option small { color: var(--ink-soft); font-size: var(--s-1); text-align: right; }
+.option-notes { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.option .incomplete { color: var(--stamp-red); font-style: italic; }
+.option[aria-selected="true"] .incomplete, .option:hover .incomplete { color: #f3a59c; }
 .option[aria-selected="true"], .option:hover { background: var(--ink); color: var(--manila-light); }
 .option[aria-selected="true"] small, .option:hover small { color: var(--manila-deep); }
 
@@ -384,6 +387,7 @@ main {
 .lineup th:first-child { width: 22%; }
 .lineup td { padding: 3px; vertical-align: top; }
 .lineup td.who { font-family: var(--display); font-weight: 800; font-size: var(--s1); line-height: 1.05; padding-top: 8px; overflow-wrap: anywhere; }
+.who-note { display: block; margin-top: 4px; font-family: var(--type); font-weight: 400; font-style: italic; font-size: .72rem; color: var(--stamp-red); }
 .tile {
   display: flex;
   flex-direction: column;
