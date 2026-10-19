@@ -17,30 +17,6 @@ Three files a day, each with its own answer:
 Players can also replay past days from the archive, play random practice files (filtered to *Worm* or *Ward*),
 track streaks, and share a spoiler-free result grid. Progress is saved in the player's browser; there are no accounts.
 
-## One-time setup: turn on GitHub Pages
-
-1. In this repository, open **Settings → Pages**.
-2. Under **Build and deployment → Source**, choose **GitHub Actions**.
-3. Open the **Actions** tab, pick the latest **Build and deploy** run, and choose **Re-run all jobs**.
-
-After about a minute the game is live. Every push to `main` redeploys it.
-
-## Custom domain: wormdle.me
-
-The domain is registered with Cloudflare, which also runs its DNS. GitHub Pages serves the site.
-
-| Type | Name | Points to | Proxy status |
-|---|---|---|---|
-| A | `wormdle.me` | `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` (one record each) | DNS only |
-| CNAME | `www` | `raunakdune.github.io` | DNS only |
-
-In this repository's **Settings → Pages**, **Custom domain** is set to `www.wormdle.me` and **Enforce HTTPS** is on.
-GitHub sends `wormdle.me` and the old `raunakdune.github.io/parahumans-guesser-game/` address to `www.wormdle.me`.
-Because the site is published by GitHub Actions, no `CNAME` file is needed in the repo.
-
-If you ever turn on Cloudflare's proxy (orange cloud) for these records, set Cloudflare's **SSL/TLS** mode to
-**Full** first, or browsers will get stuck in a redirect loop.
-
 ## Updating the game from the spreadsheet
 
 The workbook in [`data/parahumandle_design.xlsx`](data/parahumandle_design.xlsx) is the single source of truth.
@@ -119,6 +95,7 @@ site/                           the static website that gets published
   fonts/                        Big Shoulders Display and Courier Prime (SIL Open Font License)
 tests/                          checks for the data pipeline
 .github/workflows/deploy.yml    build and publish on every push
+HOSTING_NOTES.md                GitHub Pages and wormdle.me domain setup
 ```
 
 ## Hosting somewhere else
