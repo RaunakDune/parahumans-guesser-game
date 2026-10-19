@@ -74,7 +74,7 @@ async function load() {
 
   wireChrome();
   render();
-  maybeWarnSpoilers();
+  maybeWelcome();
   setInterval(tick, 30000);
 }
 
@@ -673,11 +673,20 @@ function openDialog(dialog) {
   else dialog.setAttribute("open", "");
 }
 
-function maybeWarnSpoilers() {
-  if (store.data.spoilersOk) return;
-  const dialog = $("#dialog-spoilers");
+// First visit: one pop-up with the beta notice and, if not yet accepted, the spoiler warning.
+// Players who accepted spoilers before the beta notice existed see the beta part once on its own.
+function maybeWelcome() {
+  const needSpoilers = !store.data.spoilersOk;
+  const needBeta = !store.data.betaNoticeSeen;
+  if (!needSpoilers && !needBeta) return;
+  $("#welcome-beta").hidden = !needBeta;
+  $("#welcome-spoilers").hidden = !needSpoilers;
+  $("#welcome-ok").textContent = needSpoilers ? "I've read them, let me play" : "Got it, let me play";
+  const dialog = $("#dialog-welcome");
+  if (!needBeta) dialog.setAttribute("aria-labelledby", "welcome-spoilers");
   dialog.addEventListener("close", () => {
     store.data.spoilersOk = true;
+    store.data.betaNoticeSeen = true;
     store.save();
     $("#guess-input")?.focus({ preventScroll: true });
   }, { once: true });
@@ -685,6 +694,10 @@ function maybeWarnSpoilers() {
 }
 
 function fillHelp() {
+  const ready = game.capes.filter((c) => (c.pool || []).includes("dossier")).length;
+  $("#beta-ready").textContent = `${ready}`;
+  $("#beta-total").textContent = `${game.capes.length} capes`;
+  $("#help-beta").textContent = `${ready} of ${game.capes.length} capes have complete files so far`;
   $("#help-clues").textContent = game.clues.map((c) => c.label.toLowerCase()).join(", ");
   $("#help-guesses").textContent = game.config.maxGuesses;
   $("#help-reset").textContent = game.config.resetLabel.toLowerCase();

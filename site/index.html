@@ -73,6 +73,7 @@
     <li>Names, cape names and civilian names all count. Skitter, Weaver and Taylor Hebert are the same answer.</li>
     <li>Status means where things stand at the end of <cite>Ward</cite>. Team means the last team the cape belonged to.</li>
     <li>New files arrive at <span id="help-reset">midnight CET</span>. Missed one? Open it from the archive.</li>
+    <li>Wormdle is in beta: <span id="help-beta">not every cape's file is finished yet</span>. Capes with unfinished files can still be guessed, but some of their details show as Unknown.</li>
   </ul>
 </dialog>
 
@@ -82,13 +83,23 @@
   <div id="stats-body"></div>
 </dialog>
 
-<dialog id="dialog-spoilers" class="memo memo-warning" aria-labelledby="spoiler-title">
-  <h2 id="spoiler-title">Spoilers for all of Worm and Ward</h2>
-  <p>The answers come from both stories, start to finish. The clues include who ends up dead,
-     which side a cape ends up on, and secret identities.</p>
-  <p>If you're still reading, you may want to come back later.</p>
+<dialog id="dialog-welcome" class="memo memo-warning" aria-labelledby="welcome-title">
+  <section id="welcome-beta">
+    <h2 id="welcome-title">Wormdle is in beta</h2>
+    <p>The cape files are still being written. Right now <strong id="beta-ready">some</strong> of the
+       <span id="beta-total">capes</span> on record have complete files. Only those can be a day's answer,
+       and only those give reliable results when you guess them.</p>
+    <p>You can still guess any cape. If its file isn't finished, some of its details show as Unknown,
+       so a guess may not compare the way you'd expect.</p>
+  </section>
+  <section id="welcome-spoilers">
+    <h3>Spoilers for all of Worm and Ward</h3>
+    <p>The answers come from both stories, start to finish. The clues include who ends up dead,
+       which side a cape ends up on, and secret identities. If you're still reading, you may want to
+       come back later.</p>
+  </section>
   <form method="dialog" class="memo-actions">
-    <button value="ok" class="button button-primary">I've read them, let me play</button>
+    <button value="ok" class="button button-primary" id="welcome-ok">Got it, let me play</button>
   </form>
 </dialog>
 </body>
