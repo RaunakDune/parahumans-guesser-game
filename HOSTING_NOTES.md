@@ -30,6 +30,5 @@ If you ever turn on Cloudflare's proxy (orange cloud) for these records, set Clo
 ## Link-preview image
 
 The `og:image` and `twitter:image` tags in `site/index.html` load the preview picture from
-`raw.githubusercontent.com`, because that address always has HTTPS. Once **Enforce HTTPS** is on for wormdle.me,
-they can point back to `https://www.wormdle.me/assets/og-image.png`. Discord caches previews, so test a changed
-preview with a new query string, such as `https://www.wormdle.me/?v=3`.
+`https://www.wormdle.me/assets/og-image.png`. Discord and other sites cache previews, so after changing the
+picture or its tags, test with a new query string on the link, such as `https://www.wormdle.me/?v=3`.
