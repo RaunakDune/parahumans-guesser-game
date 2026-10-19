@@ -136,8 +136,10 @@ function maxGuesses(mode) {
 
 // A cape's file is complete when it qualifies as a daily answer: every clue filled in and checked
 // by scripts/build_data.py. This is recomputed from the spreadsheet on every build.
+// A file is complete when every detail is filled in (people marked Non-cape need no power class).
+// Recomputed from the spreadsheet on every build by scripts/build_data.py.
 function isIncomplete(cape) {
-  return !(cape.pool || []).includes("dossier");
+  return !cape.complete;
 }
 
 function sameCape(a, b) {
@@ -158,7 +160,8 @@ function compareField(field, guess, answer) {
 
 function display(field, cape) {
   const value = cape[field];
-  if (!value) return "Unknown";
+  // "Unknown" is a real answer in the sheet, so a blank detail reads differently.
+  if (!value) return field === "power" && cape.disposition === "Non-cape" ? "No powers" : "Not on file";
   if (field === "team" && fold(value) === "noteam") return "No team";
   return value;
 }

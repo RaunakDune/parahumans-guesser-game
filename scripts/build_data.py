@@ -79,6 +79,14 @@ LIST_FIELDS = {
     "series": "series",
 }
 
+# Values the game always accepts, on top of whatever the Lists sheet allows.
+ALWAYS_ALLOWED = {
+    "disposition": {"Unknown", "Non-cape"},
+    "status": {"Unknown"},
+    "gender": {"Unknown"},
+}
+NON_CAPE = "Non-cape"
+
 POWER_CLASSES = ["Mover", "Shaker", "Brute", "Breaker", "Master", "Tinker",
                  "Blaster", "Thinker", "Striker", "Changer", "Trump", "Stranger"]
 
@@ -197,6 +205,9 @@ def read_lists(wb) -> dict[str, set[str]]:
         values = {clean(r[col]) for r in rows[1:] if col < len(r) and clean(r[col])}
         if values:
             allowed[field] = values
+    for field, extra in ALWAYS_ALLOWED.items():
+        if field in allowed:
+            allowed[field] |= extra
     return allowed
 
 
@@ -274,7 +285,7 @@ def read_roster(wb, allowed: dict[str, set[str]], warn) -> list[dict]:
             "name": name,
             "aliases": [a for a in split_list(get("aliases")) if fold(a) != fold(name)],
             "series": get("series"),
-            "disposition": get("disposition"),
+            "disposition": NON_CAPE if fold(get("disposition")) == "noncape" else get("disposition"),
             "type": get("type"),
             "gender": get("gender"),
             "status": get("status"),
@@ -371,12 +382,20 @@ def scrub_description(cape: dict) -> str:
 def mark_pools(capes: list[dict], warn) -> None:
     for cape in capes:
         reasons = []
+        non_cape = cape["disposition"] == NON_CAPE
         for f in REQUIRED_FIELDS[1:]:
+            if f == "power" and non_cape:
+                continue                    # people without powers need no power class
             if not cape[f]:
                 reasons.append(f"no {f}")
         if cape["disputed"]:
             reasons.append("disputed rating")
         reasons += cape["_problems"]
+        # "complete": every detail is filled in, so guesses with this person compare properly.
+        # "eligible": complete AND a cape, so they can be a daily answer.
+        cape["complete"] = not reasons
+        if non_cape:
+            reasons.append("not a cape")
         cape["eligible"] = not reasons
         cape["_why_not"] = reasons
         for p in cape["_problems"]:
@@ -478,6 +497,7 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
                 "hybrid": c["hybrid"], "rating": c["rating"], "civilian": c["civilian"],
                 "description": c["description"], "powerClue": c["powerClue"] if c["powerEligible"] else "",
                 "pool": [m for m in MODES if c["id"] in pools[m]],
+                "complete": c["complete"] or None,
             }.items() if v not in ("", [], None)}
             for c in sorted(capes, key=lambda c: fold(c["name"]))
         ],

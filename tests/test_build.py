@@ -37,6 +37,44 @@ class Helpers(unittest.TestCase):
         self.assertNotIn("Quarrel", out)
 
 
+class Completeness(unittest.TestCase):
+    def cape(self, **over):
+        base = dict(name="Test", aliases=[], civilian="", description="", series="Worm", disposition="Hero",
+                    type="Human", gender="Female", status="Alive", team="Wards", power="Thinker",
+                    disputed=False, _problems=[], _row=2)
+        base.update(over)
+        return base
+
+    def test_unknown_values_count_as_filled(self):
+        c = self.cape(status="Unknown", disposition="Unknown")
+        bd.mark_pools([c], lambda w: None)
+        self.assertTrue(c["complete"])
+        self.assertTrue(c["eligible"])
+
+    def test_non_cape_is_complete_without_power_but_never_an_answer(self):
+        c = self.cape(disposition="Non-cape", power="")
+        bd.mark_pools([c], lambda w: None)
+        self.assertTrue(c["complete"])
+        self.assertFalse(c["eligible"])
+
+    def test_missing_detail_is_incomplete(self):
+        c = self.cape(gender="")
+        bd.mark_pools([c], lambda w: None)
+        self.assertFalse(c["complete"])
+        self.assertFalse(c["eligible"])
+
+    def test_lists_always_allow_unknown_and_non_cape(self):
+        from openpyxl import Workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Lists"
+        ws.append(["Disposition", "Status"])
+        ws.append(["Hero", "Alive"])
+        allowed = bd.read_lists(wb)
+        self.assertTrue({"Unknown", "Non-cape"} <= allowed["disposition"])
+        self.assertIn("Unknown", allowed["status"])
+
+
 class Schedule(unittest.TestCase):
     def test_history_is_frozen_when_pool_changes(self):
         today = dt.date(2026, 10, 18)

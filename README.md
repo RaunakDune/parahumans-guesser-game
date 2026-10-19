@@ -64,11 +64,15 @@ Columns are matched by their heading text, so you can add, remove or reorder oth
 | **Roster** | Every row with a **Cape name** can be guessed. **Aliases** (separated by `;`) and **Civilian name** are accepted as guesses too. **Power description** feeds the Power file, and **Hybrid / sub-ratings** feeds the "close" match in Lineup. |
 | **Clue Ladder** | Which clues the Dossier shows, and in what order (the **Unlocked after wrong guess #** column). |
 | **Settings** | **Free first clue?** (0 or 1), **Max guesses**, and **Reset time** (for example `Midnight CET`, `Midnight UTC-5`). |
-| **Lists** | The allowed values for Disposition, Type, Gender, Status, Power class and Series. A value that isn't listed keeps that cape out of the answer pool. |
+| **Lists** | The allowed values for Disposition, Type, Gender, Status, Power class and Series. A value that isn't listed keeps that cape out of the answer pool. Disposition always accepts Unknown and Non-cape, and Status and Gender always accept Unknown, even if the sheet doesn't list them. |
 
 A cape can be a **daily answer** when it has Series, Disposition, Type, Gender, Status, Team and Power class filled in,
 isn't marked as a disputed rating, and has a single team (no `/`). For the Power file it also needs a power
-description that still makes sense with its names blacked out. Rows whose names differ only by accents or spacing
+description that still makes sense with its names blacked out. "Unknown" counts as a filled-in value.
+
+People whose Disposition is **Non-cape** (Danny Hebert, Emily Piggot) can be guessed but are never daily answers, and
+they don't need a Power class. Any row that's missing details shows "File incomplete" in the guess list and the
+Lineup, and its blank details read "Not on file". Rows whose names differ only by accents or spacing
 (Uber and Über) are merged into one cape. Capes that list each other as aliases (Skitter and Khepri) count as the
 same answer.
 
