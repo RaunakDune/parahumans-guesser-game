@@ -4,7 +4,7 @@ A daily guessing game for Wildbow's *Worm* and *Ward*. Each day there's a redact
 guess lifts another black bar until you name them. Players are greeted as WEDGDG (Watchdog) agents, each with their
 own agent number.
 
-**Play:** https://raunakdune.github.io/parahumans-guesser-game/ (after the one-time setup below)
+**Play:** https://www.wormdle.me/
 
 Three files a day, each with its own answer:
 
@@ -23,7 +23,23 @@ track streaks, and share a spoiler-free result grid. Progress is saved in the pl
 2. Under **Build and deployment → Source**, choose **GitHub Actions**.
 3. Open the **Actions** tab, pick the latest **Build and deploy** run, and choose **Re-run all jobs**.
 
-After about a minute the game is live at the address above. Every push to `main` redeploys it.
+After about a minute the game is live. Every push to `main` redeploys it.
+
+## Custom domain: wormdle.me
+
+The domain is registered with Cloudflare, which also runs its DNS. GitHub Pages serves the site.
+
+| Type | Name | Points to | Proxy status |
+|---|---|---|---|
+| A | `wormdle.me` | `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` (one record each) | DNS only |
+| CNAME | `www` | `raunakdune.github.io` | DNS only |
+
+In this repository's **Settings → Pages**, **Custom domain** is set to `www.wormdle.me` and **Enforce HTTPS** is on.
+GitHub sends `wormdle.me` and the old `raunakdune.github.io/parahumans-guesser-game/` address to `www.wormdle.me`.
+Because the site is published by GitHub Actions, no `CNAME` file is needed in the repo.
+
+If you ever turn on Cloudflare's proxy (orange cloud) for these records, set Cloudflare's **SSL/TLS** mode to
+**Full** first, or browsers will get stuck in a redirect loop.
 
 ## Updating the game from the spreadsheet
 
