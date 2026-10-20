@@ -1,16 +1,15 @@
 # Wormdle
 
-A daily guessing game for Wildbow's *Worm* and *Ward*. Each day there's a redacted PRT file on a cape; every wrong
-guess lifts another black bar until you name them. Players are greeted as WEDGDG (Watchdog) agents, each with their
+A daily guessing game for Wildbow's *Worm* and *Ward*. Each day there's a new cape to identify from PRT files,
+and every guess narrows it down. Players are greeted as WEDGDG (Watchdog) agents, each with their
 own agent number.
 
 **Play:** https://www.wormdle.me/
 
-Three files a day, each with its own answer:
+Two files a day, each with its own answer:
 
 | File | How it plays |
 |---|---|
-| **Dossier** | Six clues start blacked out. Each wrong guess opens the next: disposition, type, gender, status, team, power class. Seven guesses. |
 | **Lineup** | Guess any cape and see how they compare with the target on the same six details: match, close, or no match. Unlimited guesses. |
 | **Power file** | A description of the cape's power with their names blacked out. Wrong guesses open notes on power class, team and disposition. Seven guesses. |
 
@@ -38,8 +37,8 @@ Columns are matched by their heading text, so you can add, remove or reorder oth
 | Sheet | Used for |
 |---|---|
 | **Roster** | Every row with a **Cape name** can be guessed. **Aliases** (separated by `;`) and **Civilian name** are accepted as guesses too. **Power description** feeds the Power file, and **Hybrid / sub-ratings** feeds the "close" match in Lineup. |
-| **Clue Ladder** | Which clues the Dossier shows, and in what order (the **Unlocked after wrong guess #** column). |
-| **Settings** | **Free first clue?** (0 or 1), **Max guesses**, and **Reset time** (for example `Midnight CET`, `Midnight UTC-5`). |
+| **Clue Ladder** | Which details the Lineup compares, in column order (the **Unlocked after wrong guess #** column sets the order). |
+| **Settings** | **Max guesses** (for the Power file; Lineup is unlimited) and **Reset time** (for example `Midnight CET`, `Midnight UTC-5`). **Free first clue?** is no longer used. |
 | **Lists** | The allowed values for Disposition, Type, Gender, Status, Power class and Series. A value that isn't listed keeps that cape out of the answer pool. Disposition always accepts Unknown and Non-cape, and Status and Gender always accept Unknown, even if the sheet doesn't list them. |
 
 A cape can be a **daily answer** when it has Series, Disposition, Type, Gender, Status, Team and Power class filled in,

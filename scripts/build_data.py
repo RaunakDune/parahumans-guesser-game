@@ -38,7 +38,7 @@ PREFERRED_WORKBOOK = "parahumandle_design.xlsx"
 HORIZON_DAYS = 400          # how far ahead the schedule is drawn
 FREEZE_DAYS_AHEAD = 1       # today and tomorrow never change once drawn
 SCHEDULE_KEY = b"brockton-bay"  # light obfuscation so answers aren't readable at a glance
-MODES = ("dossier", "lineup", "power")
+MODES = ("lineup", "power")
 
 # Logical field -> heading prefix in the Roster sheet (first matching column wins).
 ROSTER_FIELDS = {
@@ -464,7 +464,6 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
     offset = parse_offset(settings["reset_label"])
     today = game_date(now_utc, offset)
     pools = {
-        "dossier": [c["id"] for c in capes if c["eligible"]],
         "lineup": [c["id"] for c in capes if c["eligible"]],
         "power": [c["id"] for c in capes if c["powerEligible"]],
     }
@@ -482,7 +481,6 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
         "source": workbook.name,
         "config": {
             "maxGuesses": settings["max_guesses"],
-            "freeFirstClue": settings["free_first_clue"],
             "resetLabel": settings["reset_label"],
             "resetOffsetMinutes": offset,
             "launch": schedule["launch"],
@@ -507,9 +505,9 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
     if not quiet:
         print(f"workbook   {workbook.name}")
         print(f"capes      {len(capes)} guessable")
-        print(f"pools      dossier {len(pools['dossier'])}, lineup {len(pools['lineup'])}, power {len(pools['power'])}")
+        print(f"pools      lineup {len(pools['lineup'])}, power {len(pools['power'])}")
         print(f"clues      {' > '.join(c['label'] for c in clues)}")
-        print(f"guesses    {settings['max_guesses']} (free first clue: {'yes' if settings['free_first_clue'] else 'no'})")
+        print(f"guesses    {settings['max_guesses']} in the Power file (Lineup is unlimited)")
         print(f"reset      {settings['reset_label']} (UTC{offset / 60:+g}), today is puzzle "
               f"#{(today - dt.date.fromisoformat(schedule['launch'])).days + 1} (launched {schedule['launch']})")
         for w in warnings_seen:

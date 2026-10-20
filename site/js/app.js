@@ -7,7 +7,6 @@ import {
 } from "./util.js";
 
 const MODES = {
-  dossier: { tab: "Dossier", file: "PRT threat assessment", limited: true },
   lineup: { tab: "Lineup", file: "Identification lineup", limited: false },
   power: { tab: "Power file", file: "Power assessment", limited: true },
 };
@@ -32,7 +31,7 @@ let byId = new Map();
 let searchIndex = [];       // [{cape, key, label, isAlias}]
 let today = 1;              // today's puzzle number
 const state = {
-  mode: "dossier",
+  mode: "lineup",
   pick: "today",            // "today" | "archive:<n>" | "practice"
   practice: {},             // mode -> { answerId, guesses: [], series }
   fresh: null,              // what changed on the last guess, for one-off motion
@@ -64,6 +63,7 @@ async function load() {
 
   const fromHash = location.hash.replace("#", "");
   if (MODES[fromHash]) state.mode = fromHash;
+  else if (fromHash) history.replaceState(null, "", `#${state.mode}`);   // e.g. old #dossier links
 
   fillHelp();
   greetAgent();
@@ -196,11 +196,6 @@ function submitGuess(cape) {
 }
 
 function describeOpened(mode, misses, answer) {
-  if (mode === "dossier") {
-    const offset = game.config.freeFirstClue ? 1 : 0;
-    const clue = game.clues[misses - 1 + offset];
-    return clue ? `New clue, ${clue.label}: ${display(clue.field, answer)}.` : "";
-  }
   if (mode === "power") {
     const hint = POWER_HINTS.find((x) => x.after === misses);
     return hint ? `New note, ${labelFor(hint.field)}: ${display(hint.field, answer)}.` : "";
@@ -256,7 +251,7 @@ function render() {
   });
   sheet.setAttribute("aria-labelledby", `tab-${state.mode}`);
 
-  const body = { dossier: renderDossier, lineup: renderLineup, power: renderPower }[state.mode](puzzle);
+  const body = { lineup: renderLineup, power: renderPower }[state.mode](puzzle);
   sheet.replaceChildren(...[
     renderHead(puzzle),
     renderSubject(puzzle),
@@ -309,31 +304,6 @@ function renderSubject(puzzle) {
 function redaction(chars, label) {
   const width = Math.max(4, Math.min(22, chars));
   return h("span", { class: "redaction", style: `width:${width}ch`, role: "img", "aria-label": label });
-}
-
-function renderDossier(puzzle) {
-  const { progress, answer } = puzzle;
-  const won = progress.won;
-  const misses = progress.g.length - (won ? 1 : 0);
-  const free = game.config.freeFirstClue ? 1 : 0;
-  const open = progress.done ? game.clues.length : misses + free;
-  const items = game.clues.map((clue, i) => {
-    const isOpen = i < open;
-    const isFresh = state.fresh?.clue && i === misses - 1 + free;
-    const unlockAt = i + 1 - free;
-    const value = isOpen
-      ? h("span", { class: "reveal-text" + (isFresh ? " is-fresh" : "") }, display(clue.field, answer))
-      : redaction(BAR_WIDTH[clue.field] || 8, `${clue.label}, hidden until ${unlockAt} wrong ${unlockAt === 1 ? "guess" : "guesses"}`);
-    return h("li", { class: "clue" },
-      h("span", { class: "clue-no" }, i + 1),
-      h("span", { class: "clue-label" }, clue.label),
-      h("span", { class: "clue-value" }, value));
-  });
-  return [
-    h("ol", { class: "clues", "aria-label": "Clues" }, items),
-    ...guessArea(puzzle),
-    ruledOut(puzzle),
-  ];
 }
 
 function renderPower(puzzle) {
@@ -663,6 +633,7 @@ function wireChrome() {
   window.addEventListener("hashchange", () => {
     const mode = location.hash.replace("#", "");
     if (MODES[mode] && mode !== state.mode) switchMode(mode);
+    else if (!MODES[mode]) history.replaceState(null, "", `#${state.mode}`);
   });
 }
 
@@ -707,11 +678,10 @@ function maybeWelcome() {
 }
 
 function fillHelp() {
-  const ready = game.capes.filter((c) => (c.pool || []).includes("dossier")).length;
+  const ready = game.capes.filter((c) => (c.pool || []).includes("lineup")).length;
   $("#beta-ready").textContent = `${ready}`;
   $("#beta-total").textContent = `${game.capes.length} capes`;
   $("#help-beta").textContent = `${ready} of ${game.capes.length} capes have complete files so far`;
-  $("#help-clues").textContent = game.clues.map((c) => c.label.toLowerCase()).join(", ");
   $("#help-guesses").textContent = game.config.maxGuesses;
   $("#help-reset").textContent = game.config.resetLabel.toLowerCase();
 }

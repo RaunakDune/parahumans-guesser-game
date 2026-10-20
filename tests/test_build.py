@@ -93,7 +93,7 @@ class Schedule(unittest.TestCase):
     def test_no_quick_repeats(self):
         pools = {m: [f"cape-{i}" for i in range(30)] for m in bd.MODES}
         s = bd.draw_schedule({}, pools, dt.date(2026, 1, 1), lambda w: None)
-        days = [bd.decode_id(t) for t in s["modes"]["dossier"]]
+        days = [bd.decode_id(t) for t in s["modes"]["lineup"]]
         for i in range(15, len(days)):
             self.assertNotIn(days[i], days[i - 15:i])
 

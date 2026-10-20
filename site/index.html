@@ -42,7 +42,6 @@
 <main id="main">
   <div class="folder">
     <div class="tabs" role="tablist" aria-label="Game mode">
-      <button role="tab" type="button" class="tab" id="tab-dossier" data-mode="dossier" aria-controls="sheet">Dossier</button>
       <button role="tab" type="button" class="tab" id="tab-lineup" data-mode="lineup" aria-controls="sheet">Lineup</button>
       <button role="tab" type="button" class="tab" id="tab-power" data-mode="power" aria-controls="sheet">Power file</button>
     </div>
@@ -66,17 +65,14 @@
 <dialog id="dialog-help" class="memo" aria-labelledby="help-title">
   <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
   <h2 id="help-title">How to play</h2>
-  <p>Every day there's a new cape from <cite>Worm</cite> or <cite>Ward</cite> to identify, in three files.</p>
-  <h3>Dossier</h3>
-  <p>The file starts fully redacted. Each wrong guess removes one black bar, in this order:
-     <span id="help-clues"></span>. You have <span id="help-guesses">7</span> guesses.</p>
+  <p>Every day there's a new cape from <cite>Worm</cite> or <cite>Ward</cite> to identify, in two files.</p>
   <h3>Lineup</h3>
   <p>Guess any cape and see how they compare with the target on the same six details.
      A green check means it matches. An amber mark means close: the power classes overlap.
      A red cross means no match. Guess as many times as you need.</p>
   <h3>Power file</h3>
   <p>Read a description of the cape's power with their names blacked out.
-     Wrong guesses open extra notes about the cape.</p>
+     Wrong guesses open extra notes about the cape. You have <span id="help-guesses">7</span> guesses.</p>
   <h3>A few rules</h3>
   <ul>
     <li>Names, cape names and civilian names all count. Skitter, Weaver and Taylor Hebert are the same answer.</li>
