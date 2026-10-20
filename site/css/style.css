@@ -525,6 +525,7 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
 }
 .colophon p { margin: 0 0 6px; max-width: 72ch; }
 .data-stamp { color: #7f9198; }
+.colophon .contact { color: var(--manila-light); }
 
 /* ---------------------------------------------------------------- small screens */
 @media (max-width: 560px) {
