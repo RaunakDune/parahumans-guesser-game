@@ -72,8 +72,13 @@ export function hash(text) {
 // ---------------------------------------------------------------- dates
 const DAY = 86400000;
 
-/** Today's game date (YYYY-MM-DD) in the reset time zone, as a UTC-midnight timestamp. */
+/** Today's game date as a UTC-midnight timestamp. offsetMinutes null = the player's own calendar date,
+ *  so the new puzzle arrives at their local midnight; a number = a fixed zone for everyone. */
 export function gameDay(offsetMinutes, now = Date.now()) {
+  if (offsetMinutes == null) {
+    const local = new Date(now);
+    return Date.UTC(local.getFullYear(), local.getMonth(), local.getDate());
+  }
   const shifted = new Date(now + offsetMinutes * 60000);
   return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
 }
@@ -92,6 +97,10 @@ export function shortDate(date) {
 }
 
 export function msUntilReset(offsetMinutes, now = Date.now()) {
+  if (offsetMinutes == null) {
+    const local = new Date(now);
+    return new Date(local.getFullYear(), local.getMonth(), local.getDate() + 1) - now;   // DST-safe
+  }
   return gameDay(offsetMinutes, now) + DAY - (now + offsetMinutes * 60000);
 }
 

@@ -22,7 +22,8 @@ class Helpers(unittest.TestCase):
         self.assertEqual(bd.parse_offset("Midnight UTC"), 0)
         self.assertEqual(bd.parse_offset("Midnight UTC-5"), -300)
         self.assertEqual(bd.parse_offset("midnight cst"), -360)
-        self.assertEqual(bd.parse_offset("whenever"), 60)
+        self.assertIsNone(bd.parse_offset("whenever"))
+        self.assertIsNone(bd.parse_offset("Midnight local time"))
 
     def test_encoding_round_trip(self):
         for cid in ("accord", "glaistig-uaine", "p-hu-comti"):
@@ -84,11 +85,29 @@ class Schedule(unittest.TestCase):
         smaller = {m: p[:20] for m, p in pools.items()}
         second = bd.draw_schedule(first, smaller, later, lambda w: None)
         for m in bd.MODES:
-            # days 0..10 (+1 frozen ahead) keep their answers
-            self.assertEqual(first["modes"][m][:12], second["modes"][m][:12])
-            future = [bd.decode_id(t) for t in second["modes"][m][12:]]
+            # days 0..10, plus the frozen days ahead, keep their answers
+            kept = 11 + bd.FREEZE_DAYS_AHEAD
+            self.assertEqual(first["modes"][m][:kept], second["modes"][m][:kept])
+            future = [bd.decode_id(t) for t in second["modes"][m][kept:]]
             self.assertTrue(set(future) <= set(smaller[m]))
         self.assertEqual(second["launch"], "2026-10-18")
+
+    def test_redraw_replaces_past_days_and_bumps_edition(self):
+        today = dt.date(2026, 10, 18)
+        pools = {m: [f"cape-{i}" for i in range(40)] for m in bd.MODES}
+        first = bd.draw_schedule({}, pools, today, lambda w: None)
+        self.assertEqual(first["edition"], 1)
+        later = today + dt.timedelta(days=2)
+        again = bd.draw_schedule(first, pools, later, lambda w: None, redraw=True)
+        self.assertEqual(again["edition"], 2)
+        self.assertEqual(again["launch"], first["launch"])
+        for m in bd.MODES:
+            self.assertNotEqual(first["modes"][m][:10], again["modes"][m][:10])
+        # a normal build afterwards keeps the new edition and its frozen days
+        after = bd.draw_schedule(again, pools, later, lambda w: None)
+        self.assertEqual(after["edition"], 2)
+        for m in bd.MODES:
+            self.assertEqual(after["modes"][m][:5], again["modes"][m][:5])
 
     def test_no_quick_repeats(self):
         pools = {m: [f"cape-{i}" for i in range(30)] for m in bd.MODES}

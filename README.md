@@ -38,7 +38,7 @@ Columns are matched by their heading text, so you can add, remove or reorder oth
 |---|---|
 | **Roster** | Every row with a **Cape name** can be guessed. **Aliases** (separated by `;`) and **Civilian name** are accepted as guesses too. **Power description** feeds the Power file, and **Hybrid / sub-ratings** feeds the "close" match in Lineup. |
 | **Clue Ladder** | Which details the Lineup compares, in column order (the **Unlocked after wrong guess #** column sets the order). |
-| **Settings** | **Max guesses** (for the Power file; Lineup is unlimited) and **Reset time** (for example `Midnight CET`, `Midnight UTC-5`). **Free first clue?** is no longer used. |
+| **Settings** | **Max guesses** (for the Power file; Lineup is unlimited) and **Reset time** (`Midnight local time`, the default, gives each player a new puzzle at their own midnight like Wordle; a fixed zone such as `Midnight CET` or `Midnight UTC-5` gives everyone the same moment). **Free first clue?** is no longer used. |
 | **Lists** | The allowed values for Disposition, Type, Gender, Status, Power class and Series. A value that isn't listed keeps that cape out of the answer pool. Disposition always accepts Unknown and Non-cape, and Status and Gender always accept Unknown, even if the sheet doesn't list them. |
 
 A cape can be a **daily answer** when it has Series, Disposition, Type, Gender, Status, Team and Power class filled in,
@@ -53,10 +53,21 @@ same answer.
 
 ### How the daily answers are picked
 
-`scripts/build_data.py` draws a schedule about 400 days ahead and saves it to `data/schedule.json`. Today's and
-tomorrow's answers, and all earlier ones, are frozen, so editing the sheet never changes a puzzle someone has
-already played. Days further ahead are re-drawn from the current answer pool on each build, with no repeats inside
+`scripts/build_data.py` draws a schedule about 400 days ahead and saves it to `data/schedule.json`. Every answer up to
+two days past today (UTC), and all earlier ones, are frozen, so editing the sheet never changes a puzzle someone
+anywhere in the world has already played. (Puzzles change at each player's local midnight, so someone in New
+Zealand can be a day ahead of someone in London.) Days further ahead are re-drawn from the current answer pool on each build, with no repeats inside
 a window of half the pool. The answers are lightly scrambled in that file so they aren't readable at a glance.
+
+If a big sheet update makes past answers wrong, re-draw every day, past ones included, while keeping the
+puzzle numbers:
+
+```
+python scripts/build_data.py --redraw
+```
+
+Commit `data/schedule.json` and push. This starts a new schedule *edition*; when players next open the site, their
+old results are cleared and they see a short note explaining why.
 
 To restart the numbering at puzzle #1 (for example, on launch day), delete `data/schedule.json` and push.
 

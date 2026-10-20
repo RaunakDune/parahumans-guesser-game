@@ -60,6 +60,7 @@ async function load() {
     if (cape.civilian) searchIndex.push({ cape, key: fold(cape.civilian), label: cape.civilian, isAlias: true });
   }
   today = puzzleNumberFor(game.config.launch, game.config.resetOffsetMinutes);
+  const refiled = checkEdition();
 
   const fromHash = location.hash.replace("#", "");
   if (MODES[fromHash]) state.mode = fromHash;
@@ -74,8 +75,9 @@ async function load() {
 
   wireChrome();
   render();
-  maybeWelcome();
+  if (!maybeWelcome() && refiled) openDialog($("#dialog-refiled"));
   setInterval(tick, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
 }
 
 function poolFor(mode) {
@@ -93,6 +95,23 @@ function answerFor(mode, number) {
 }
 
 // ---------------------------------------------------------------- progress
+
+// When the schedule is re-drawn from scratch (a new "edition"), every saved result
+// belongs to answers that no longer exist, so they're cleared. Returns true if the
+// player had results that were cleared.
+function checkEdition() {
+  const edition = game.config.edition || 1;
+  const had = store.data.edition || 1;
+  if (had === edition) {
+    if (!store.data.edition) { store.data.edition = edition; store.save(); }
+    return false;
+  }
+  const lost = Object.values(store.data.progress || {}).some((m) => Object.keys(m).length);
+  store.data.progress = {};
+  store.data.edition = edition;
+  store.save();
+  return lost;
+}
 
 function progressFor(mode, number) {
   const all = (store.data.progress ||= {});
@@ -662,7 +681,7 @@ function openDialog(dialog) {
 function maybeWelcome() {
   const needSpoilers = !store.data.spoilersOk;
   const needBeta = !store.data.betaNoticeSeen;
-  if (!needSpoilers && !needBeta) return;
+  if (!needSpoilers && !needBeta) return false;
   $("#welcome-beta").hidden = !needBeta;
   $("#welcome-spoilers").hidden = !needSpoilers;
   $("#welcome-ok").textContent = needSpoilers ? "I've read them, let me play" : "Got it, let me play";
@@ -675,6 +694,7 @@ function maybeWelcome() {
     $("#guess-input")?.focus({ preventScroll: true });
   }, { once: true });
   openDialog(dialog);
+  return true;
 }
 
 function fillHelp() {
@@ -683,7 +703,8 @@ function fillHelp() {
   $("#beta-total").textContent = `${game.capes.length} capes`;
   $("#help-beta").textContent = `${ready} of ${game.capes.length} capes have complete files so far`;
   $("#help-guesses").textContent = game.config.maxGuesses;
-  $("#help-reset").textContent = game.config.resetLabel.toLowerCase();
+  $("#help-reset").textContent = game.config.resetOffsetMinutes == null
+    ? "midnight, your local time" : game.config.resetLabel.toLowerCase();
 }
 
 // Each player gets a Watchdog (WEDGDG) agent number that stays the same between visits.

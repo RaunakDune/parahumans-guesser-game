@@ -4,14 +4,20 @@
     python scripts/build_data.py            # build site/data/game.json
     python scripts/build_data.py --check    # validate only, write nothing
     python scripts/build_data.py --peek 7   # print the next 7 daily answers
+    python scripts/build_data.py --redraw   # throw away every drawn day, past ones too,
+                                            # and start a new edition of the schedule
 
 The workbook in data/ is the single source of truth. Columns are found by
 their heading text, so columns can be added or reordered freely.
 
-The daily schedule is kept in data/schedule.json. Puzzles up to and including
-tomorrow are frozen there, so updating the spreadsheet never changes an answer
-that players have already seen. Days further ahead are re-drawn from the
-current answer pool on every build.
+The daily schedule is kept in data/schedule.json. Puzzles up to two days past
+today (UTC) are frozen there, so updating the spreadsheet never changes an
+answer that a player anywhere in the world may already be looking at. Days
+further ahead are re-drawn from the current answer pool on every build.
+
+--redraw is for when the sheet changes so much that past answers no longer
+hold up. It bumps the schedule's edition number; the site sees the new
+edition and clears players' old results.
 """
 from __future__ import annotations
 
@@ -36,7 +42,7 @@ OUT_PATH = ROOT / "site" / "data" / "game.json"
 
 PREFERRED_WORKBOOK = "parahumandle_design.xlsx"
 HORIZON_DAYS = 400          # how far ahead the schedule is drawn
-FREEZE_DAYS_AHEAD = 1       # today and tomorrow never change once drawn
+FREEZE_DAYS_AHEAD = 2       # with local-midnight resets, players up to UTC+14 are a day ahead of UTC
 SCHEDULE_KEY = b"brockton-bay"  # light obfuscation so answers aren't readable at a glance
 MODES = ("lineup", "power")
 
@@ -159,9 +165,12 @@ def sheet(wb, name):
     raise BuildError(f"The workbook has no '{name}' sheet")
 
 
-def parse_offset(label: str) -> int:
-    """'Midnight CET' -> 60, 'Midnight UTC-5' -> -300 (minutes east of UTC)."""
+def parse_offset(label: str) -> int | None:
+    """'Midnight CET' -> 60, 'Midnight UTC-5' -> -300 (minutes east of UTC).
+    'Midnight local time' (or anything unrecognised) -> None: each player's own midnight."""
     text = (label or "").upper()
+    if "LOCAL" in text:
+        return None
     m = re.search(r"(UTC|GMT)\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?", text)
     if m:
         minutes = int(m.group(3)) * 60 + int(m.group(4) or 0)
@@ -169,11 +178,12 @@ def parse_offset(label: str) -> int:
     for abbr, minutes in TZ_ABBREVIATIONS.items():
         if re.search(rf"\b{abbr}\b", text):
             return minutes
-    return 60
+    return None
 
 
-def game_date(now_utc: dt.datetime, offset_minutes: int) -> dt.date:
-    return (now_utc + dt.timedelta(minutes=offset_minutes)).date()
+def game_date(now_utc: dt.datetime, offset_minutes: int | None) -> dt.date:
+    """The puzzle date. With local resets, UTC stands in (the freeze window covers the spread)."""
+    return (now_utc + dt.timedelta(minutes=offset_minutes or 0)).date()
 
 
 def encode_id(cape_id: str) -> str:
@@ -212,7 +222,7 @@ def read_lists(wb) -> dict[str, set[str]]:
 
 
 def read_settings(wb, clue_count: int) -> dict:
-    settings = {"free_first_clue": False, "max_guesses": clue_count + 1, "reset_label": "Midnight CET"}
+    settings = {"free_first_clue": False, "max_guesses": clue_count + 1, "reset_label": "Midnight local time"}
     try:
         ws = sheet(wb, "Settings")
     except BuildError:
@@ -415,14 +425,17 @@ def load_schedule() -> dict:
     return {}
 
 
-def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, warn) -> dict:
+def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, warn,
+                  redraw: bool = False) -> dict:
     launch = dt.date.fromisoformat(previous["launch"]) if previous.get("launch") else today
+    edition = int(previous.get("edition", 1)) + (1 if redraw and previous else 0)
     today_index = (today - launch).days
     freeze_until = today_index + FREEZE_DAYS_AHEAD   # inclusive
-    out = {"launch": launch.isoformat(), "modes": {}}
+    out = {"launch": launch.isoformat(), "edition": edition, "modes": {}}
+    salt = "" if edition == 1 else f":e{edition}"
     for mode in MODES:
         pool = sorted(pools[mode])
-        old = [decode_id(t) for t in previous.get("modes", {}).get(mode, [])]
+        old = [] if redraw else [decode_id(t) for t in previous.get("modes", {}).get(mode, [])]
         days = old[: max(0, freeze_until + 1)]
         if not pool:
             out["modes"][mode] = [encode_id(x) for x in days]
@@ -430,7 +443,7 @@ def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, w
         recent_window = max(1, min(len(pool) // 2, 120))
         while len(days) <= today_index + HORIZON_DAYS:
             index = len(days)
-            seed = int(hashlib.sha256(f"{mode}:{launch}:{index}".encode()).hexdigest(), 16)
+            seed = int(hashlib.sha256(f"{mode}:{launch}:{index}{salt}".encode()).hexdigest(), 16)
             rng = random.Random(seed)
             recent = set(days[-recent_window:])
             choices = [c for c in pool if c not in recent] or pool
@@ -441,7 +454,8 @@ def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, w
 
 # ---------------------------------------------------------------- main
 
-def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool = False) -> dict:
+def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool = False,
+          redraw: bool = False) -> dict:
     warnings_seen: list[str] = []
     warn = warnings_seen.append
 
@@ -468,7 +482,7 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
         "power": [c["id"] for c in capes if c["powerEligible"]],
     }
     known_ids = {c["id"] for c in capes}
-    schedule = draw_schedule(load_schedule(), pools, today, warn)
+    schedule = draw_schedule(load_schedule(), pools, today, warn, redraw=redraw)
     for mode, tokens in schedule["modes"].items():
         for i, t in enumerate(tokens[: (today - dt.date.fromisoformat(schedule["launch"])).days + 2]):
             if decode_id(t) not in known_ids:
@@ -484,6 +498,7 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
             "resetLabel": settings["reset_label"],
             "resetOffsetMinutes": offset,
             "launch": schedule["launch"],
+            "edition": schedule["edition"],
         },
         "clues": clues,
         "powerClasses": POWER_CLASSES,
@@ -508,8 +523,10 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
         print(f"pools      lineup {len(pools['lineup'])}, power {len(pools['power'])}")
         print(f"clues      {' > '.join(c['label'] for c in clues)}")
         print(f"guesses    {settings['max_guesses']} in the Power file (Lineup is unlimited)")
-        print(f"reset      {settings['reset_label']} (UTC{offset / 60:+g}), today is puzzle "
-              f"#{(today - dt.date.fromisoformat(schedule['launch'])).days + 1} (launched {schedule['launch']})")
+        zone = "each player's local time" if offset is None else f"UTC{offset / 60:+g}"
+        print(f"reset      {settings['reset_label']} ({zone}), today is puzzle "
+              f"#{(today - dt.date.fromisoformat(schedule['launch'])).days + 1} (launched {schedule['launch']}, "
+              f"schedule edition {schedule['edition']})")
         for w in warnings_seen:
             print(f"warning    {w}")
 
@@ -529,9 +546,12 @@ def main(argv=None) -> int:
     ap.add_argument("--workbook", help="path to the .xlsx (default: the workbook in data/)")
     ap.add_argument("--check", action="store_true", help="validate only; write nothing")
     ap.add_argument("--peek", type=int, metavar="DAYS", help="print upcoming daily answers")
+    ap.add_argument("--redraw", action="store_true",
+                    help="re-draw every day, past ones included, as a new schedule edition")
     args = ap.parse_args(argv)
     try:
-        game = build(find_workbook(args.workbook), dt.datetime.now(dt.timezone.utc), write=not args.check)
+        game = build(find_workbook(args.workbook), dt.datetime.now(dt.timezone.utc), write=not args.check,
+                     redraw=args.redraw)
     except BuildError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
