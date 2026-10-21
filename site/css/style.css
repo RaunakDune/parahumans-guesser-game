@@ -477,6 +477,13 @@ main {
 .facts dd { margin: 0; }
 .report-power { margin: 0 0 18px; font-style: italic; color: var(--manila-light); max-width: 62ch; }
 .report-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.agents-record { margin: 18px 0 4px; padding: 14px 16px; border: 1px dashed color-mix(in srgb, var(--manila) 45%, transparent); }
+.agents-record h3 { margin: 0 0 10px; font-family: var(--display); font-weight: 800; font-size: var(--s1); letter-spacing: .02em; color: var(--manila); }
+.record-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px; margin: 0; }
+.record-stats div { display: flex; flex-direction: column-reverse; gap: 2px; }
+.record-stats dt { font-size: var(--s-1); color: var(--manila-light); }
+.record-stats dd { margin: 0; font-family: var(--display); font-weight: 800; font-size: var(--s3, 1.8rem); line-height: 1; color: var(--sodium); }
+.record-note { margin: 10px 0 0; font-size: var(--s-1); color: var(--manila-light); opacity: .8; }
 .report .button { border-color: var(--manila); color: var(--manila); }
 .report .button-primary { background: var(--sodium); border-color: var(--sodium); color: var(--night); }
 .report .button-primary:hover { background: var(--sodium-soft); color: var(--night); }

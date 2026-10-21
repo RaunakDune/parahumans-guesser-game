@@ -33,3 +33,20 @@ The `og:image` and `twitter:image` tags in `site/index.html` load the preview pi
 `https://www.wormdle.me/assets/og-image.png?v=2`. When you replace the picture, bump the `?v=` number in both tags so
 sites fetch the new one. Discord and other sites cache previews, so after changing the
 picture or its tags, test with a new query string on the link, such as `https://www.wormdle.me/?v=3`.
+
+## Analytics (GoatCounter)
+
+Anonymous, cookieless counts at https://ronindune.goatcounter.com. The script tag is in
+`site/index.html`; game events are sent by `site/js/analytics.js`.
+
+- **Visits:** pages, referrers (Discord, Reddit…), countries, browsers, systems and screen sizes.
+  GoatCounter does not measure page speed.
+- **Game events:** daily files only (not archive or practice), each sent once per player per file.
+  For puzzle #12: `lineup-12-finished`, `-solved`, `-solved-in-N`, `-within-8`, `-revealed`,
+  `-revealed-after-N`, `-shared`; `power-12-finished`, `-solved`, `-solved-in-N`, `-failed`, `-shared`.
+  The `lineup-12-sum-1/2/4/…` events are the guess count split into powers of two, so the site can
+  add up the exact average; ignore them in the dashboard.
+- **"How other agents did"** on the Lineup report reads these totals back through GoatCounter's public
+  counter. It needs **Settings → "Allow adding visitor counts on your website"** turned on, appears once
+  5 players have finished a file, and lags by up to about four hours (GoatCounter caches the numbers).
+- Ad blockers stop some players from being counted, so treat the numbers as a lower bound.
