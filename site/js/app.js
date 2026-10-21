@@ -42,6 +42,8 @@ const state = {
 
 // Lineup has no guess limit, so a stuck player can reveal the answer after this many guesses.
 const REVEAL_AFTER = 8;
+// GoatCounter reads this hash to stop (or restart) counting your own visits; leave it in place.
+const GC_TOGGLE = "toggle-goatcounter";
 
 // ---------------------------------------------------------------- data
 
@@ -69,7 +71,7 @@ async function load() {
 
   const fromHash = location.hash.replace("#", "");
   if (MODES[fromHash]) state.mode = fromHash;
-  else if (fromHash) history.replaceState(null, "", `#${state.mode}`);   // e.g. old #dossier links
+  else if (fromHash && fromHash !== GC_TOGGLE) history.replaceState(null, "", `#${state.mode}`);   // e.g. old #dossier links
 
   fillHelp();
   greetAgent();
@@ -733,7 +735,7 @@ function wireChrome() {
   window.addEventListener("hashchange", () => {
     const mode = location.hash.replace("#", "");
     if (MODES[mode] && mode !== state.mode) switchMode(mode);
-    else if (!MODES[mode]) history.replaceState(null, "", `#${state.mode}`);
+    else if (!MODES[mode] && mode !== GC_TOGGLE) history.replaceState(null, "", `#${state.mode}`);
   });
 }
 
