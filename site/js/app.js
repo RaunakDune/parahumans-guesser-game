@@ -5,6 +5,7 @@ import {
   fold, h, store, decodeId, hash, puzzleNumberFor, dateOfPuzzle, shortDate,
   msUntilReset, formatCountdown,
 } from "./util.js";
+import { trackFinish, trackShare, lineupRecord } from "./analytics.js";
 
 const MODES = {
   lineup: { tab: "Lineup", file: "Identification lineup", limited: false },
@@ -210,6 +211,7 @@ function submitGuess(cape) {
     progress.onDay = puzzle.kind === "today";
     state.fresh = { stamp: true };
     announce(won ? `Identified: ${answer.name}.` : `Out of guesses. The cape was ${answer.name}.`);
+    trackFinish(puzzle, game.config.edition || 1);
   } else {
     state.fresh = { clue: misses };
     announce(`${cape.name} is wrong. ${describeOpened(mode, misses, answer)}`);
@@ -229,6 +231,7 @@ function revealAnswer() {
   state.confirmReveal = null;
   state.fresh = { stamp: true };
   announce(`Answer revealed: ${answer.name}.`);
+  trackFinish(puzzle, game.config.edition || 1);
   puzzle.save();
   render();
 }
@@ -566,7 +569,31 @@ function renderReport(puzzle) {
       next,
       h("a", { class: "button", href: wiki, target: "_blank", rel: "noopener" }, "Look them up on the Worm Wiki"),
       toast),
+    agentsRecord(puzzle),
     puzzle.kind === "practice" ? null : h("p", { class: "next-file", id: "next-file" }, nextFileText()));
+}
+
+// "How other agents did" on today's Lineup file, read back from the anonymous counts.
+// Shown only once enough players have finished for the numbers to mean something.
+const RECORD_MIN_PLAYERS = 5;
+
+function agentsRecord(puzzle) {
+  if (puzzle.mode !== "lineup" || puzzle.kind !== "today") return null;
+  const box = h("section", { class: "agents-record", hidden: true, "aria-labelledby": "agents-record-title" });
+  lineupRecord(puzzle.number, game.config.edition || 1).then((r) => {
+    if (!r || r.finished < RECORD_MIN_PLAYERS || !box.isConnected) return;
+    const pct = Math.round((100 * Math.min(r.within8, r.finished)) / r.finished);
+    const avg = r.solved ? (r.totalGuesses / r.solved).toFixed(1) : null;
+    box.replaceChildren(
+      h("h3", { id: "agents-record-title" }, "How other agents did"),
+      h("dl", { class: "record-stats" },
+        h("div", {}, h("dt", {}, "Identified within 8 guesses"), h("dd", {}, `${pct}%`)),
+        avg ? h("div", {}, h("dt", {}, "Average guesses to identify"), h("dd", {}, avg)) : null,
+        h("div", {}, h("dt", {}, "Agents who closed this file"), h("dd", {}, r.finished.toLocaleString()))),
+      h("p", { class: "record-note" }, "Anonymous counts, updated every few hours."));
+    box.hidden = false;
+  });
+  return box;
 }
 
 function nextFileText() {
@@ -604,6 +631,8 @@ function shareText(puzzle) {
 
 async function share(puzzle, toast) {
   const text = shareText(puzzle);
+  trackShare(puzzle, game.config.edition || 1);
+  puzzle.save();
   try {
     if (navigator.share && matchMedia("(hover: none)").matches) {
       await navigator.share({ text });
