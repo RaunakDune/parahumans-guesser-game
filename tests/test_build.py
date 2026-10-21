@@ -76,6 +76,36 @@ class Completeness(unittest.TestCase):
         self.assertIn("Unknown", allowed["status"])
 
 
+class LookAlikes(unittest.TestCase):
+    FIELDS = ["disposition", "type", "gender", "status", "team", "power"]
+
+    def cape(self, cid, group=None, **over):
+        base = dict(id=cid, group=group or cid, name=cid.title(), disposition="Villain", type="Human",
+                    gender="Male", status="Dead", team="Slaughterhouse Nine", power="Brute")
+        base.update(over)
+        return base
+
+    def test_identical_capes_are_flagged(self):
+        twins = bd.find_lineup_twins([self.cape("a"), self.cape("b"), self.cape("c", team="No team")], self.FIELDS)
+        self.assertEqual(twins, {"a": ["B"], "b": ["A"]})
+
+    def test_aliases_of_one_person_and_blanks_are_not_flagged(self):
+        twins = bd.find_lineup_twins([self.cape("a"), self.cape("a2", group="a"),
+                                      self.cape("x", gender=""), self.cape("y", gender="")], self.FIELDS)
+        self.assertEqual(twins, {})
+
+    def test_comparison_ignores_case_and_accents(self):
+        twins = bd.find_lineup_twins([self.cape("a"), self.cape("b", team="slaughterhouse nine")], self.FIELDS)
+        self.assertIn("a", twins)
+
+    def test_real_workbook_lineup_pool_has_no_look_alikes(self):
+        game = bd.build(bd.find_workbook(None), dt.datetime(2026, 10, 21, 12, tzinfo=UTC), write=False, quiet=True)
+        fields = [c["field"] for c in game["clues"]]
+        pool = [c for c in game["capes"] if "lineup" in c.get("pool", [])]
+        twins = bd.find_lineup_twins([dict(c, group=c["group"]) for c in game["capes"]], fields)
+        self.assertFalse([c["name"] for c in pool if c["id"] in twins])
+
+
 class Schedule(unittest.TestCase):
     def test_history_is_frozen_when_pool_changes(self):
         today = dt.date(2026, 10, 18)
@@ -108,6 +138,17 @@ class Schedule(unittest.TestCase):
         self.assertEqual(after["edition"], 2)
         for m in bd.MODES:
             self.assertEqual(after["modes"][m][:5], again["modes"][m][:5])
+
+    def test_keep_through_redraws_only_later_days(self):
+        today = dt.date(2026, 10, 18)
+        pools = {m: [f"cape-{i}" for i in range(40)] for m in bd.MODES}
+        first = bd.draw_schedule({}, pools, today, lambda w: None)
+        later = today + dt.timedelta(days=3)
+        again = bd.draw_schedule(first, pools, later, lambda w: None, keep_through=later)
+        self.assertEqual(again["edition"], first["edition"])
+        for m in bd.MODES:
+            self.assertEqual(first["modes"][m][:4], again["modes"][m][:4])
+            self.assertNotEqual(first["modes"][m][4:14], again["modes"][m][4:14])
 
     def test_no_quick_repeats(self):
         pools = {m: [f"cape-{i}" for i in range(30)] for m in bd.MODES}

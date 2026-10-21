@@ -6,6 +6,12 @@
     python scripts/build_data.py --peek 7   # print the next 7 daily answers
     python scripts/build_data.py --redraw   # throw away every drawn day, past ones too,
                                             # and start a new edition of the schedule
+    python scripts/build_data.py --keep-through 2026-10-21
+                                            # keep answers up to that date, re-draw the rest
+
+Capes that are different people but match on all six Lineup details are left
+out of the Lineup answer pool (guessing one would turn every tile green
+without solving the puzzle), and the build warns about them.
 
 The workbook in data/ is the single source of truth. Columns are found by
 their heading text, so columns can be added or reordered freely.
@@ -26,6 +32,7 @@ import base64
 import datetime as dt
 import hashlib
 import json
+import os
 import random
 import re
 import sys
@@ -417,6 +424,31 @@ def mark_pools(capes: list[dict], warn) -> None:
         cape["powerEligible"] = cape["eligible"] and len(clue) >= 25 and not hidden
 
 
+def find_lineup_twins(capes: list[dict], fields: list[str]) -> dict[str, list[str]]:
+    """Capes that are different people but match on every Lineup detail.
+
+    If one of them were the answer, guessing the other would turn every tile green
+    without solving the puzzle. Returns cape id -> names of its look-alikes."""
+    by_key: dict[tuple, list[dict]] = {}
+    for c in capes:
+        values = tuple(fold(c.get(f) or "") for f in fields)
+        if all(values):
+            by_key.setdefault(values, []).append(c)
+    twins: dict[str, list[str]] = {}
+    for group in by_key.values():
+        if len({c["group"] for c in group}) < 2:
+            continue
+        for c in group:
+            twins[c["id"]] = sorted(o["name"] for o in group if o["group"] != c["group"])
+    return twins
+
+
+def annotate(message: str) -> None:
+    """Show a warning on the GitHub Actions run page (no-op elsewhere)."""
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print(f"::warning title=Lineup look-alikes::{message}")
+
+
 # ---------------------------------------------------------------- schedule
 
 def load_schedule() -> dict:
@@ -426,13 +458,17 @@ def load_schedule() -> dict:
 
 
 def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, warn,
-                  redraw: bool = False) -> dict:
+                  redraw: bool = False, keep_through: dt.date | None = None) -> dict:
     launch = dt.date.fromisoformat(previous["launch"]) if previous.get("launch") else today
     edition = int(previous.get("edition", 1)) + (1 if redraw and previous else 0)
     today_index = (today - launch).days
     freeze_until = today_index + FREEZE_DAYS_AHEAD   # inclusive
+    if keep_through is not None:                      # explicit cut-off, e.g. "keep up to today"
+        freeze_until = (keep_through - launch).days
     out = {"launch": launch.isoformat(), "edition": edition, "modes": {}}
     salt = "" if edition == 1 else f":e{edition}"
+    if keep_through is not None:
+        salt += f":k{keep_through}"       # a fresh draw for the re-drawn days
     for mode in MODES:
         pool = sorted(pools[mode])
         old = [] if redraw else [decode_id(t) for t in previous.get("modes", {}).get(mode, [])]
@@ -455,7 +491,7 @@ def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, w
 # ---------------------------------------------------------------- main
 
 def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool = False,
-          redraw: bool = False) -> dict:
+          redraw: bool = False, keep_through: dt.date | None = None) -> dict:
     warnings_seen: list[str] = []
     warn = warnings_seen.append
 
@@ -470,6 +506,22 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
     capes = merge_duplicates(capes, warn)
     assign_ids_and_groups(capes)
     mark_pools(capes, warn)
+    lineup_fields = [c["field"] for c in clues]
+    twins = find_lineup_twins(capes, lineup_fields)
+    reported = set()
+    for c in sorted(capes, key=lambda c: c["_row"]):
+        if c["id"] not in twins:
+            continue
+        names = tuple(sorted([c["name"], *twins[c["id"]]]))
+        if names in reported:
+            continue
+        reported.add(names)
+        rows = sorted(o["_row"] for o in capes if o["name"] in names)
+        msg = (f"Lineup look-alikes: {', '.join(names)} (rows {', '.join(map(str, rows))}) all read "
+               + " / ".join(c[f] for f in lineup_fields)
+               + ". None of them can be a Lineup answer until one detail differs")
+        warn(msg)
+        annotate(msg)
 
     if not any(c["eligible"] for c in capes):
         raise BuildError("No cape has all six clue fields filled, so there's nothing to play. "
@@ -478,16 +530,26 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
     offset = parse_offset(settings["reset_label"])
     today = game_date(now_utc, offset)
     pools = {
-        "lineup": [c["id"] for c in capes if c["eligible"]],
+        "lineup": [c["id"] for c in capes if c["eligible"] and c["id"] not in twins],
         "power": [c["id"] for c in capes if c["powerEligible"]],
     }
     known_ids = {c["id"] for c in capes}
-    schedule = draw_schedule(load_schedule(), pools, today, warn, redraw=redraw)
+    schedule = draw_schedule(load_schedule(), pools, today, warn, redraw=redraw, keep_through=keep_through)
+    launch = dt.date.fromisoformat(schedule["launch"])
+    names = {c["id"]: c["name"] for c in capes}
+    frozen = (today - launch).days + FREEZE_DAYS_AHEAD + 1
     for mode, tokens in schedule["modes"].items():
-        for i, t in enumerate(tokens[: (today - dt.date.fromisoformat(schedule["launch"])).days + 2]):
-            if decode_id(t) not in known_ids:
-                warn(f"{mode} puzzle #{i + 1} was '{decode_id(t)}', which is no longer in the Roster; "
+        for i, t in enumerate(tokens[:frozen]):
+            cid = decode_id(t)
+            if cid not in known_ids:
+                warn(f"{mode} puzzle #{i + 1} was '{cid}', which is no longer in the Roster; "
                      "players will see a stand-in for that day")
+            elif mode == "lineup" and cid in twins and launch + dt.timedelta(days=i) >= today - dt.timedelta(days=1):
+                msg = (f"Lineup puzzle #{i + 1} ({launch + dt.timedelta(days=i)}) is {names[cid]}, who matches "
+                       f"{', '.join(twins[cid])} on every detail. That day is already fixed, so change one of "
+                       "their details in the sheet before then")
+                warn(msg)
+                annotate(msg)
 
     game = {
         "title": "Wormdle",
@@ -548,10 +610,12 @@ def main(argv=None) -> int:
     ap.add_argument("--peek", type=int, metavar="DAYS", help="print upcoming daily answers")
     ap.add_argument("--redraw", action="store_true",
                     help="re-draw every day, past ones included, as a new schedule edition")
+    ap.add_argument("--keep-through", metavar="YYYY-MM-DD", type=dt.date.fromisoformat,
+                    help="keep the answers up to and including this date; re-draw every later day")
     args = ap.parse_args(argv)
     try:
         game = build(find_workbook(args.workbook), dt.datetime.now(dt.timezone.utc), write=not args.check,
-                     redraw=args.redraw)
+                     redraw=args.redraw, keep_through=args.keep_through)
     except BuildError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
