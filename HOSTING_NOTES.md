@@ -49,4 +49,6 @@ Anonymous, cookieless counts at https://ronindune.goatcounter.com. The script ta
 - **"How other agents did"** on the Lineup report reads these totals back through GoatCounter's public
   counter. It needs **Settings → "Allow adding visitor counts on your website"** turned on, appears once
   5 players have finished a file, and lags by up to about four hours (GoatCounter caches the numbers).
+- To stop counting your own visits, open https://www.wormdle.me/#toggle-goatcounter once in each
+  browser you use (open it again to undo).
 - Ad blockers stop some players from being counted, so treat the numbers as a lower bound.
