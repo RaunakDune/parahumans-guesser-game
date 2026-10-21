@@ -540,7 +540,14 @@ function shareText(puzzle) {
   if (mode === "lineup") {
     score = progress.won ? `${progress.g.length} ${progress.g.length === 1 ? "guess" : "guesses"}` : "unsolved";
     const rows = progress.g.map((id) => game.clues.map((c) => SHARE_TILE[compareField(c.field, byId.get(id), answer)]).join(""));
-    grid = (rows.length > 8 ? [...rows.slice(0, 7), `…and ${rows.length - 7} more`] : rows).join("\n");
+    // Long games keep the opening guesses and the run-up to the answer, where the
+    // close (yellow) tiles and the solving row are; only the middle is folded away.
+    const HEAD = 2, TAIL = 8;
+    if (rows.length > HEAD + TAIL + 1) {
+      const hidden = rows.length - HEAD - TAIL;
+      rows.splice(HEAD, hidden, `⋮ ${hidden} more ${hidden === 1 ? "guess" : "guesses"}`);
+    }
+    grid = rows.join("\n");
   } else {
     const limit = maxGuesses(mode);
     score = `${progress.won ? progress.g.length : "X"}/${limit}`;
