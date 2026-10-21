@@ -17,7 +17,7 @@ const POWER_HINTS = [
   { after: 6, field: "disposition" },
 ];
 const MARK = { match: "✓", near: "≈", miss: "✗" };
-const MARK_WORD = { match: "matches", near: "is close", miss: "doesn't match" };
+const MARK_WORD = { match: "matches", near: "partly matches, sharing a power class", miss: "doesn't match" };
 const SHARE_TILE = { match: "🟩", near: "🟨", miss: "🟥" };
 // Redaction bars have a fixed width per clue so their length never hints at the answer.
 const BAR_WIDTH = { disposition: 8, type: 9, gender: 7, status: 6, team: 13, power: 9 };
@@ -385,7 +385,7 @@ function renderLineup(puzzle) {
           h("tbody", {}, rows)),
         h("p", { class: "lineup-legend" },
           h("span", { class: "k-match" }, "✓ matches"),
-          h("span", { class: "k-near" }, "≈ close (power classes overlap)"),
+          h("span", { class: "k-near" }, "≈ partly right: shares a power class"),
           h("span", { class: "k-miss" }, "✗ no match")))
     : h("p", { class: "ruled-out" }, "Name any cape to put them in the lineup and compare them with the subject.");
   return [...guessArea(puzzle), table];
