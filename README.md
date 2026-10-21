@@ -69,6 +69,15 @@ python scripts/build_data.py --redraw
 Commit `data/schedule.json` and push. This starts a new schedule *edition*; when players next open the site, their
 old results are cleared and they see a short note explaining why.
 
+To keep every answer up to a given date and re-draw only the days after it (for example after fixing a clash
+in the sheet), run `python scripts/build_data.py --keep-through YYYY-MM-DD`, then commit `data/schedule.json` and push.
+Players' results are kept.
+
+**Lineup look-alikes.** If two different capes have the same six Lineup details, guessing one when the other is
+the answer would turn every tile green without solving it. The build finds these, leaves them out of the Lineup
+answer pool (they can still be guessed, and can still be Power file answers), and lists them as warnings at the top
+of the GitHub Actions run. Change one detail in the sheet and they go back into the pool on the next build.
+
 To restart the numbering at puzzle #1 (for example, on launch day), delete `data/schedule.json` and push.
 
 To see upcoming answers yourself:
