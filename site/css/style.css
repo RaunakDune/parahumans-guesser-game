@@ -375,6 +375,9 @@ main {
 .pip.is-used { background: var(--ink); }
 .pip.is-hit { background: var(--stamp-green); border-color: var(--stamp-green); }
 
+.reveal { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: -4px 0 14px; }
+.reveal-note { font-size: var(--s-1); color: var(--ink-soft); }
+.button-small { padding: 4px 12px; font-size: var(--s-1); }
 .ruled-out { margin: 0; font-size: var(--s-1); color: var(--ink-soft); }
 .ruled-out ol { display: inline; margin: 0; padding: 0; list-style: none; }
 .ruled-out li { display: inline; }

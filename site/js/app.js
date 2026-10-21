@@ -36,7 +36,11 @@ const state = {
   practice: {},             // mode -> { answerId, guesses: [], series }
   fresh: null,              // what changed on the last guess, for one-off motion
   error: "",
+  confirmReveal: null,      // Lineup: key of the file whose "Reveal answer" was pressed once, awaiting confirmation
 };
+
+// Lineup has no guess limit, so a stuck player can reveal the answer after this many guesses.
+const REVEAL_AFTER = 8;
 
 // ---------------------------------------------------------------- data
 
@@ -214,6 +218,43 @@ function submitGuess(cape) {
   render();
 }
 
+function revealAnswer() {
+  const puzzle = currentPuzzle();
+  const { progress, answer } = puzzle;
+  if (progress.done || progress.g.length < REVEAL_AFTER) return;
+  progress.done = true;
+  progress.won = false;
+  progress.revealed = true;
+  progress.onDay = puzzle.kind === "today";
+  state.confirmReveal = null;
+  state.fresh = { stamp: true };
+  announce(`Answer revealed: ${answer.name}.`);
+  puzzle.save();
+  render();
+}
+
+function revealControl(puzzle) {
+  const used = puzzle.progress.g.length;
+  const left = REVEAL_AFTER - used;
+  if (left > 0) {
+    return h("div", { class: "reveal" },
+      h("button", { type: "button", class: "button button-small", disabled: true }, "Reveal answer"),
+      h("span", { class: "reveal-note" }, `Stuck? You can reveal the answer in ${left} more ${left === 1 ? "guess" : "guesses"}.`));
+  }
+  const key = `${puzzle.mode}:${puzzle.kind}:${puzzle.number}`;
+  if (state.confirmReveal === key) {
+    return h("div", { class: "reveal", role: "group", "aria-label": "Confirm reveal" },
+      h("span", { class: "reveal-note" }, "Reveal the answer? This file will count as unsolved in your stats."),
+      h("button", { type: "button", class: "button button-small button-primary", id: "reveal-yes", onclick: revealAnswer }, "Yes, reveal it"),
+      h("button", { type: "button", class: "button button-small",
+        onclick: () => { state.confirmReveal = null; render(); } }, "Keep guessing"));
+  }
+  return h("div", { class: "reveal" },
+    h("button", { type: "button", class: "button button-small",
+      onclick: () => { state.confirmReveal = key; render(); $("#reveal-yes")?.focus({ preventScroll: true }); } }, "Reveal answer"),
+    h("span", { class: "reveal-note" }, "Stuck? You can reveal the answer now."));
+}
+
 function describeOpened(mode, misses, answer) {
   if (mode === "power") {
     const hint = POWER_HINTS.find((x) => x.after === misses);
@@ -285,7 +326,7 @@ function renderHead(puzzle) {
   const options = [h("option", { value: "today" }, `Today's file, #${today}`)];
   for (let n = today - 1; n >= 1; n--) {
     const p = (store.data.progress?.[puzzle.mode] || {})[n];
-    const result = p?.done ? (p.won ? ", solved" : ", unsolved") : "";
+    const result = p?.done ? (p.won ? ", solved" : p.revealed ? ", revealed" : ", unsolved") : "";
     options.push(h("option", { value: `archive:${n}` }, `#${n}, ${shortDate(dateOfPuzzle(game.config.launch, n))}${result}`));
   }
   options.push(h("option", { value: "practice" }, "Practice, random cape"));
@@ -409,6 +450,7 @@ function guessArea(puzzle) {
   } else if (progress.g.length) {
     parts.push(h("div", { class: "meter" }, `${progress.g.length} ${progress.g.length === 1 ? "guess" : "guesses"} so far`));
   }
+  if (mode === "lineup" && !progress.done) parts.push(revealControl(puzzle));
   return parts;
 }
 
@@ -492,7 +534,7 @@ function guessForm(puzzle) {
 function renderStamp(puzzle) {
   const won = puzzle.progress.won;
   return h("div", { class: `stamp ${won ? "stamp-won" : "stamp-lost"}` + (state.fresh?.stamp ? " is-fresh" : ""), "aria-hidden": "true" },
-    won ? "Identified" : "Unresolved");
+    won ? "Identified" : puzzle.progress.revealed ? "Revealed" : "Unresolved");
 }
 
 function renderReport(puzzle) {
@@ -507,7 +549,9 @@ function renderReport(puzzle) {
   const toast = h("span", { class: "toast", role: "status" });
   const result = progress.won
     ? `You identified the subject in ${progress.g.length} ${progress.g.length === 1 ? "guess" : "guesses"}.`
-    : "The file stays open. Better luck tomorrow.";
+    : progress.revealed
+      ? `Answer revealed after ${progress.g.length} ${progress.g.length === 1 ? "guess" : "guesses"}. Better luck tomorrow.`
+      : "The file stays open. Better luck tomorrow.";
   const next = puzzle.kind === "practice"
     ? h("button", { type: "button", class: "button button-primary", onclick: newPractice }, "Open another practice file")
     : h("button", { type: "button", class: "button button-primary", onclick: () => share(puzzle, toast) }, "Share result");
@@ -538,7 +582,8 @@ function shareText(puzzle) {
   let grid;
   let score;
   if (mode === "lineup") {
-    score = progress.won ? `${progress.g.length} ${progress.g.length === 1 ? "guess" : "guesses"}` : "unsolved";
+    const n = `${progress.g.length} ${progress.g.length === 1 ? "guess" : "guesses"}`;
+    score = progress.won ? n : progress.revealed ? `revealed after ${n} 🏳️` : "unsolved";
     const rows = progress.g.map((id) => game.clues.map((c) => SHARE_TILE[compareField(c.field, byId.get(id), answer)]).join(""));
     // Games of more than 6 guesses keep the first 3 and last 3 rows (the run-up to the
     // answer, with its close tiles and the solving row); the middle is folded away.
