@@ -17,6 +17,11 @@ const POWER_HINTS = [
   { after: 4, field: "team" },
   { after: 6, field: "disposition" },
 ];
+// Lineup: notes that open after this many wrong guesses (the Reveal answer button comes at 8).
+const LINEUP_HINTS = [
+  { after: 2, label: "Introduced in", width: 6, value: (c) => seriesText(c) },
+  { after: 4, label: "Cluster cape", width: 4, value: (c) => clusterText(c) },
+];
 const MARK = { match: "✓", near: "≈", miss: "✗" };
 const MARK_WORD = { match: "matches", near: "partly matches, sharing a power class", miss: "doesn't match" };
 const SHARE_TILE = { match: "🟩", near: "🟨", miss: "🟥" };
@@ -266,7 +271,34 @@ function describeOpened(mode, misses, answer) {
     return hint ? `New note, ${labelFor(hint.field)}: ${display(hint.field, answer)}.` : "";
   }
   const guess = byId.get(currentPuzzle().progress.g.at(-1));
-  return game.clues.map((c) => `${c.label} ${MARK_WORD[compareField(c.field, guess, answer)]}`).join(", ") + ".";
+  const note = LINEUP_HINTS.find((x) => x.after === misses);
+  return game.clues.map((c) => `${c.label} ${MARK_WORD[compareField(c.field, guess, answer)]}`).join(", ") + "."
+    + (note ? ` New note, ${note.label}: ${note.value(answer)}.` : "");
+}
+
+function seriesText(cape) {
+  return cape.series === "Worm" || cape.series === "Ward" ? cape.series : "Not on file";
+}
+
+// Cluster column: a cluster's name, or NONE; blank means it hasn't been checked yet.
+function clusterText(cape) {
+  if (!cape.cluster) return "Not on file";
+  return cape.cluster === "NONE" ? "No" : "Yes";
+}
+
+function notesList(hints, misses, done, valueOf, label) {
+  return h("ol", { class: "clues", "aria-label": "Notes" }, hints.map((hint, i) => {
+    const isOpen = done || misses >= hint.after;
+    const isFresh = state.fresh?.clue && misses === hint.after;
+    return h("li", { class: "clue" },
+      h("span", { class: "clue-no" }, i + 1),
+      h("span", { class: "clue-label" }, label(hint)),
+      h("span", { class: "clue-value" },
+        isOpen
+          ? h("span", { class: "reveal-text" + (isFresh ? " is-fresh" : "") }, valueOf(hint))
+          : [redaction(hint.width, `${label(hint)}, hidden`),
+             h("span", { class: "hint" }, `opens after ${hint.after} misses`)]));
+  }));
 }
 
 function labelFor(field) {
@@ -380,21 +412,11 @@ function renderPower(puzzle) {
     text.push(piece);
     if (i < pieces.length - 1) text.push(redaction(7, "a name, blacked out"));
   });
-  const hints = POWER_HINTS.map((hint, i) => {
-    const isOpen = progress.done || misses >= hint.after;
-    const isFresh = state.fresh?.clue && misses === hint.after;
-    return h("li", { class: "clue" },
-      h("span", { class: "clue-no" }, i + 1),
-      h("span", { class: "clue-label" }, labelFor(hint.field)),
-      h("span", { class: "clue-value" },
-        isOpen
-          ? h("span", { class: "reveal-text" + (isFresh ? " is-fresh" : "") }, display(hint.field, answer))
-          : [redaction(BAR_WIDTH[hint.field] || 8, `${labelFor(hint.field)}, hidden`),
-             h("span", { class: "hint" }, `opens after ${hint.after} misses`)]));
-  });
+  const hints = notesList(POWER_HINTS.map((x) => ({ ...x, width: BAR_WIDTH[x.field] || 8 })), misses, progress.done,
+    (hint) => display(hint.field, answer), (hint) => labelFor(hint.field));
   return [
     h("p", { class: "power-text" }, text),
-    h("ol", { class: "clues", "aria-label": "Notes" }, hints),
+    hints,
     ...guessArea(puzzle),
     ruledOut(puzzle),
   ];
@@ -434,7 +456,9 @@ function renderLineup(puzzle) {
           h("span", { class: "k-near" }, "≈ partly right: shares a power class"),
           h("span", { class: "k-miss" }, "✗ no match")))
     : h("p", { class: "ruled-out" }, "Name any cape to put them in the lineup and compare them with the subject.");
-  return [...guessArea(puzzle), table];
+  const misses = progress.g.length - (progress.won ? 1 : 0);
+  const notes = notesList(LINEUP_HINTS, misses, progress.done, (hint) => hint.value(answer), (hint) => hint.label);
+  return [notes, ...guessArea(puzzle), table];
 }
 
 function guessArea(puzzle) {
@@ -547,7 +571,8 @@ function renderReport(puzzle) {
   const aka = [...(answer.aliases || [])];
   const facts = game.clues.map((c) => [c.label, display(c.field, answer)]);
   if (answer.hybrid?.length) facts.push(["Also rated", answer.hybrid.join(", ")]);
-  if (answer.series) facts.push(["Appears in", answer.series === "Canon (unspecified)" ? "Worm or Ward" : answer.series]);
+  if (answer.series) facts.push(["Introduced in", answer.series === "Canon (unspecified)" ? "Worm or Ward" : answer.series]);
+  if (answer.cluster && answer.cluster !== "NONE") facts.push(["Cluster", answer.cluster]);
   if (answer.civilian) facts.push(["Civilian name", answer.civilian]);
 
   const wiki = `https://worm.fandom.com/wiki/Special:Search?query=${encodeURIComponent(answer.name)}`;
