@@ -30,6 +30,12 @@ class Helpers(unittest.TestCase):
             self.assertEqual(bd.decode_id(bd.encode_id(cid)), cid)
             self.assertNotIn(cid, bd.encode_id(cid))
 
+    def test_cluster_values(self):
+        self.assertEqual(bd.clean_cluster("The Mall Cluster"), "The Mall Cluster")
+        for v in ("NONE", "none", "No", "-", "N/A"):
+            self.assertEqual(bd.clean_cluster(v), bd.NO_CLUSTER)
+        self.assertEqual(bd.clean_cluster(""), "")
+
     def test_scrub_hides_names(self):
         cape = {"name": "Butcher XIV", "aliases": ["Quarrel"], "civilian": "",
                 "description": "All former Butcher abilities; Quarrel never misses"}

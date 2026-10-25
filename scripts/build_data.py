@@ -69,7 +69,9 @@ ROSTER_FIELDS = {
     "disputed": "disputed",
     "civilian": "civilian name",
     "description": "power description",
+    "cluster": "cluster",
 }
+NO_CLUSTER = "NONE"   # Cluster column: the cluster's name, or NONE; blank means not checked yet
 REQUIRED_FIELDS = ("name", "series", "disposition", "type", "gender", "status", "team", "power")
 
 # Clue Ladder label prefix -> roster field.
@@ -279,6 +281,13 @@ def read_clues(wb) -> list[dict]:
     return clues
 
 
+def clean_cluster(value: str) -> str:
+    """'The Mall Cluster' stays as written; NONE / none / No / - all mean not a cluster cape."""
+    if value.strip() == "-" or fold(value) in ("none", "no", "n", "na", "nocluster", "notacluster"):
+        return NO_CLUSTER
+    return value
+
+
 def read_roster(wb, allowed: dict[str, set[str]], warn) -> list[dict]:
     ws = sheet(wb, "Roster")
     rows = ws.iter_rows(values_only=True)
@@ -312,6 +321,7 @@ def read_roster(wb, allowed: dict[str, set[str]], warn) -> list[dict]:
             "rating": get("rating"),
             "civilian": get("civilian").strip("?").strip() if get("civilian") not in ("-", "?") else "",
             "description": get("description"),
+            "cluster": clean_cluster(get("cluster")),
             "disputed": get("disputed").upper().startswith("Y"),
             "_row": line,
         }
@@ -340,7 +350,7 @@ def merge_duplicates(capes: list[dict], warn) -> list[dict]:
         keep = by_key[key]
         filled = lambda c: sum(bool(c[f]) for f in REQUIRED_FIELDS)
         winner, loser = (keep, cape) if filled(keep) >= filled(cape) else (cape, keep)
-        for f in REQUIRED_FIELDS + ("civilian", "description", "rating"):
+        for f in REQUIRED_FIELDS + ("civilian", "description", "rating", "cluster"):
             if not winner[f] and loser[f]:
                 winner[f] = loser[f]
         if fold(loser["name"]) != fold(winner["name"]) or loser["name"] != winner["name"]:
@@ -570,7 +580,7 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
                 "series": c["series"], "disposition": c["disposition"], "type": c["type"],
                 "gender": c["gender"], "status": c["status"], "team": c["team"], "power": c["power"],
                 "hybrid": c["hybrid"], "rating": c["rating"], "civilian": c["civilian"],
-                "description": c["description"], "powerClue": c["powerClue"] if c["powerEligible"] else "",
+                "description": c["description"], "cluster": c.get("cluster", ""), "powerClue": c["powerClue"] if c["powerEligible"] else "",
                 "pool": [m for m in MODES if c["id"] in pools[m]],
                 "complete": c["complete"] or None,
             }.items() if v not in ("", [], None)}
@@ -584,6 +594,9 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
         print(f"capes      {len(capes)} guessable")
         print(f"pools      lineup {len(pools['lineup'])}, power {len(pools['power'])}")
         print(f"clues      {' > '.join(c['label'] for c in clues)}")
+        answers = [c for c in capes if c["id"] in pools["lineup"]]
+        print(f"clusters   {sum(bool(c['cluster']) for c in answers)} of {len(answers)} Lineup answers have the "
+              f"Cluster column filled in ({sum(c['cluster'] not in ('', NO_CLUSTER) for c in capes)} cluster capes on record)")
         print(f"guesses    {settings['max_guesses']} in the Power file (Lineup is unlimited)")
         zone = "each player's local time" if offset is None else f"UTC{offset / 60:+g}"
         print(f"reset      {settings['reset_label']} ({zone}), today is puzzle "
