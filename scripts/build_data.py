@@ -72,6 +72,7 @@ ROSTER_FIELDS = {
     "cluster": "cluster",
 }
 NO_CLUSTER = "NONE"   # Cluster column: the cluster's name, or NONE; blank means not checked yet
+UNNAMED_CLUSTER = "Yes"   # in a cluster whose name isn't known
 REQUIRED_FIELDS = ("name", "series", "disposition", "type", "gender", "status", "team", "power")
 
 # Clue Ladder label prefix -> roster field.
@@ -285,6 +286,8 @@ def clean_cluster(value: str) -> str:
     """'The Mall Cluster' stays as written; NONE / none / No / - all mean not a cluster cape."""
     if value.strip() == "-" or fold(value) in ("none", "no", "n", "na", "nocluster", "notacluster"):
         return NO_CLUSTER
+    if fold(value) in ("yes", "y"):
+        return UNNAMED_CLUSTER
     return value
 
 
