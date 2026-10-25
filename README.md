@@ -36,7 +36,7 @@ Columns are matched by their heading text, so you can add, remove or reorder oth
 
 | Sheet | Used for |
 |---|---|
-| **Roster** | Every row with a **Cape name** can be guessed. **Aliases** (separated by `;`) and **Civilian name** are accepted as guesses too. **Power description** feeds the Power file, **Hybrid / sub-ratings** feeds the amber "partly right" match in Lineup, and **Series** and **Cluster** (the cluster's name, or `NONE`; blank means not checked yet) feed the Lineup notes that open after 2 and 4 wrong guesses. |
+| **Roster** | Every row with a **Cape name** can be guessed. **Aliases** (separated by `;`) and **Civilian name** are accepted as guesses too. **Power description** feeds the Power file, **Hybrid / sub-ratings** feeds the amber "partly right" match in Lineup, and **Series** and **Cluster** (the cluster's name; `Yes` if they were in a cluster whose name isn't known; `NONE` if not; blank means not checked yet) feed the Lineup notes that open after 2 and 4 wrong guesses. |
 | **Clue Ladder** | Which details the Lineup compares, in column order (the **Unlocked after wrong guess #** column sets the order). |
 | **Settings** | **Max guesses** (for the Power file; Lineup is unlimited) and **Reset time** (`Midnight local time`, the default, gives each player a new puzzle at their own midnight like Wordle; a fixed zone such as `Midnight CET` or `Midnight UTC-5` gives everyone the same moment). **Free first clue?** is no longer used. |
 | **Lists** | The allowed values for Disposition, Type, Gender, Status, Power class and Series. A value that isn't listed keeps that cape out of the answer pool. Disposition always accepts Unknown and Non-cape, and Status and Gender always accept Unknown, even if the sheet doesn't list them. |

@@ -572,7 +572,10 @@ function renderReport(puzzle) {
   const facts = game.clues.map((c) => [c.label, display(c.field, answer)]);
   if (answer.hybrid?.length) facts.push(["Also rated", answer.hybrid.join(", ")]);
   if (answer.series) facts.push(["Introduced in", answer.series === "Canon (unspecified)" ? "Worm or Ward" : answer.series]);
-  if (answer.cluster && answer.cluster !== "NONE") facts.push(["Cluster", answer.cluster]);
+  // "Yes" in the Cluster column: they were in a cluster, but its name isn't known.
+  if (answer.cluster && answer.cluster !== "NONE") {
+    facts.push(["Cluster", answer.cluster === "Yes" ? "Yes (name not on file)" : answer.cluster]);
+  }
   if (answer.civilian) facts.push(["Civilian name", answer.civilian]);
 
   const wiki = `https://worm.fandom.com/wiki/Special:Search?query=${encodeURIComponent(answer.name)}`;

@@ -35,6 +35,8 @@ class Helpers(unittest.TestCase):
         for v in ("NONE", "none", "No", "-", "N/A"):
             self.assertEqual(bd.clean_cluster(v), bd.NO_CLUSTER)
         self.assertEqual(bd.clean_cluster(""), "")
+        for v in ("Yes", "yes", "Y"):
+            self.assertEqual(bd.clean_cluster(v), bd.UNNAMED_CLUSTER)
 
     def test_scrub_hides_names(self):
         cape = {"name": "Butcher XIV", "aliases": ["Quarrel"], "civilian": "",
