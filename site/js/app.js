@@ -87,7 +87,13 @@ async function load() {
 
   wireChrome();
   render();
-  if (!maybeWelcome() && refiled) openDialog($("#dialog-refiled"));
+  const returning = Boolean(store.data.spoilersOk || store.data.betaNoticeSeen);
+  if (maybeWelcome()) markNewsSeen();          // new players learn the current rules from the welcome + How to play
+  else if (refiled) {
+    const d = $("#dialog-refiled");
+    d.addEventListener("close", () => maybeNews(returning), { once: true });
+    openDialog(d);
+  } else maybeNews(returning);
   setInterval(tick, 30000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
 }
@@ -789,6 +795,24 @@ function openDialog(dialog) {
 
 // First visit: one pop-up with the beta notice and, if not yet accepted, the spoiler warning.
 // Players who accepted spoilers before the beta notice existed see the beta part once on its own.
+// "What's new" pop-up: shown once to returning players for each NEWS_ID.
+// For the next round of changes, rewrite #dialog-news in index.html and bump NEWS_ID.
+const NEWS_ID = "2026-10-25";
+
+function markNewsSeen() {
+  if (store.data.newsSeen === NEWS_ID) return;
+  store.data.newsSeen = NEWS_ID;
+  store.save();
+}
+
+function maybeNews(returning) {
+  if (!returning || store.data.newsSeen === NEWS_ID) return;
+  markNewsSeen();
+  const dialog = $("#dialog-news");
+  dialog.addEventListener("close", () => $("#guess-input")?.focus({ preventScroll: true }), { once: true });
+  openDialog(dialog);
+}
+
 function maybeWelcome() {
   const needSpoilers = !store.data.spoilersOk;
   const needBeta = !store.data.betaNoticeSeen;
