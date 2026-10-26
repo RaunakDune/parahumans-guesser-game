@@ -94,6 +94,24 @@
   <div id="stats-body"></div>
 </dialog>
 
+<dialog id="dialog-news" class="memo" aria-labelledby="news-title">
+  <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
+  <h2 id="news-title">New in the Lineup</h2>
+  <p>Reviewers asked for more help on the hard days, so the Lineup has picked up a few things.</p>
+  <h3>Two new notes</h3>
+  <ul>
+    <li>After 2 wrong guesses, <strong>Introduced in</strong> tells you whether the cape first appeared in
+        <cite>Worm</cite> or <cite>Ward</cite>. Characters from <cite>Glow-worm</cite> count as <cite>Ward</cite>.</li>
+    <li>After 4 wrong guesses, <strong>Cluster cape</strong> tells you whether they're part of a cluster.</li>
+  </ul>
+  <h3>Reveal answer</h3>
+  <p>Truly stuck? After 8 guesses, you can reveal the answer. The file counts as unsolved in your stats,
+     and your shared result shows 🏳️.</p>
+  <form method="dialog" class="memo-actions">
+    <button value="ok" class="button button-primary">Back to the lineup</button>
+  </form>
+</dialog>
+
 <dialog id="dialog-refiled" class="memo" aria-labelledby="refiled-title">
   <h2 id="refiled-title">The files have been reorganised</h2>
   <p>A big update to the cape files changed many details, so every daily answer, past ones included,
