@@ -186,6 +186,12 @@ function sameCape(a, b) {
 // ---------------------------------------------------------------- comparing
 
 function compareField(field, guess, answer) {
+  if (field === "arc") {
+    // Arc of first appearance, numbered across Worm, PRT Quest, Glow-worm and Ward in reading order.
+    if (guess.arcOrder == null || answer.arcOrder == null) return "miss";
+    const gap = Math.abs(guess.arcOrder - answer.arcOrder);
+    return gap === 0 ? "match" : gap <= (game.config.arcClose ?? 2) ? "near" : "miss";
+  }
   if (field === "power") {
     if (guess.power === answer.power) return "match";
     const g = new Set([guess.power, ...(guess.hybrid || [])]);
@@ -193,6 +199,25 @@ function compareField(field, guess, answer) {
     return a.some((x) => g.has(x)) ? "near" : "miss";
   }
   return fold(guess[field]) && fold(guess[field]) === fold(answer[field]) ? "match" : "miss";
+}
+
+// For First appearance: does the subject first appear later or earlier than this guess?
+function arcDirection(guess, answer) {
+  if (guess.arcOrder == null || answer.arcOrder == null || guess.arcOrder === answer.arcOrder) return null;
+  return answer.arcOrder > guess.arcOrder ? "later" : "earlier";
+}
+
+function tileMark(field, result, guess, answer) {
+  const dir = field === "arc" ? arcDirection(guess, answer) : null;
+  return dir ? (dir === "later" ? "▲" : "▼") : MARK[result];
+}
+
+function tileWord(field, result, guess, answer) {
+  if (field !== "arc") return MARK_WORD[result];
+  const dir = arcDirection(guess, answer);
+  if (!dir) return result === "match" ? "matches" : "doesn't match";
+  const where = `the subject first appears ${dir}`;
+  return result === "near" ? `close, ${where}` : where;
 }
 
 function display(field, cape) {
@@ -278,12 +303,14 @@ function describeOpened(mode, misses, answer) {
   }
   const guess = byId.get(currentPuzzle().progress.g.at(-1));
   const note = LINEUP_HINTS.find((x) => x.after === misses);
-  return game.clues.map((c) => `${c.label} ${MARK_WORD[compareField(c.field, guess, answer)]}`).join(", ") + "."
+  return game.clues.map((c) => `${c.label} ${tileWord(c.field, compareField(c.field, guess, answer), guess, answer)}`).join(", ") + "."
     + (note ? ` New note, ${note.label}: ${note.value(answer)}.` : "");
 }
 
 function seriesText(cape) {
-  return cape.series === "Worm" || cape.series === "Ward" ? cape.series : "Not on file";
+  if (cape.series === "Worm" || cape.series === "PRT Quest") return cape.series;
+  if (cape.series === "Ward" || cape.series === "Glow-worm") return "Ward";   // Glow-worm counts as Ward
+  return "Not on file";
 }
 
 // Cluster column: a cluster's name, or NONE; blank means it hasn't been checked yet.
@@ -443,12 +470,12 @@ function renderLineup(puzzle) {
         const longest = Math.max(...value.split(/[\s/]+/).map((w) => w.replace(/\u200b/g, "").length));
         const total = value.replace(/\u200b/g, "").length;
         // Long values step down a size so they fit the fixed tile height.
-        const size = total > 20 ? " tile-xlong" : longest > 10 ? " tile-long" : "";
+        const size = total > 20 || longest > 10 ? " tile-xlong" : longest > 8 ? " tile-long" : "";
         return h("td", {},
-          h("div", { class: `tile tile-${result}${size}`, title: `${clue.label}: ${value.replace(/\u200b/g, "")} (${MARK_WORD[result]})` },
-            h("span", { class: "tile-mark", "aria-hidden": "true" }, MARK[result]),
+          h("div", { class: `tile tile-${result}${size}`, title: `${clue.label}: ${value.replace(/\u200b/g, "")} (${tileWord(clue.field, result, guess, answer)})` },
+            h("span", { class: "tile-mark" + (clue.field === "arc" && arcDirection(guess, answer) ? " tile-mark-arrow" : ""), "aria-hidden": "true" }, tileMark(clue.field, result, guess, answer)),
             h("span", { class: "tile-value" }, value),
-            h("span", { class: "sr-only" }, `, ${MARK_WORD[result]}`)));
+            h("span", { class: "sr-only" }, `, ${tileWord(clue.field, result, guess, answer)}`)));
       }));
   });
   const table = progress.g.length
@@ -459,7 +486,9 @@ function renderLineup(puzzle) {
           h("tbody", {}, rows)),
         h("p", { class: "lineup-legend" },
           h("span", { class: "k-match" }, "✓ matches"),
-          h("span", { class: "k-near" }, "≈ partly right: shares a power class"),
+          h("span", { class: "k-near" }, game.clues.some((c) => c.field === "arc")
+            ? `≈ close: shares a power class, or within ${game.config.arcClose ?? 2} arcs` : "≈ partly right: shares a power class"),
+          game.clues.some((c) => c.field === "arc") ? h("span", { class: "k-arrow" }, "▲ ▼ subject first appears later / earlier") : null,
           h("span", { class: "k-miss" }, "✗ no match")))
     : h("p", { class: "ruled-out" }, "Name any cape to put them in the lineup and compare them with the subject.");
   const misses = progress.g.length - (progress.won ? 1 : 0);
@@ -797,7 +826,7 @@ function openDialog(dialog) {
 // Players who accepted spoilers before the beta notice existed see the beta part once on its own.
 // "What's new" pop-up: shown once to returning players for each NEWS_ID.
 // For the next round of changes, rewrite #dialog-news in index.html and bump NEWS_ID.
-const NEWS_ID = "2026-10-25";
+const NEWS_ID = "2026-10-29";
 
 function markNewsSeen() {
   if (store.data.newsSeen === NEWS_ID) return;
