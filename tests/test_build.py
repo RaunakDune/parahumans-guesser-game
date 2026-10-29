@@ -46,6 +46,31 @@ class Helpers(unittest.TestCase):
         self.assertNotIn("Quarrel", out)
 
 
+class Arcs(unittest.TestCase):
+    def test_user_rules(self):
+        P = bd.parse_first_seen
+        self.assertEqual(P("Worm", "Interlude 12"), ("Worm", 12))
+        self.assertEqual(P("Worm", "8.01"), ("Worm", 8))
+        self.assertEqual(P("Worm", "Interlude 11h"), ("Worm", 11))
+        self.assertEqual(P("Worm", "16.z"), ("Worm", 16))
+        self.assertEqual(P("Ward", "Interlude 5x II "), ("Ward", 5))
+        self.assertEqual(P("Glow-Worm", "P.3"), ("Glow-worm", 3))
+        self.assertEqual(P("Ward", "P.2"), ("Glow-worm", 2))      # Glow-worm chapters filed under Ward
+        self.assertEqual(P("Worm", "e.1"), ("Worm", "epilogue"))
+        self.assertIsNone(P("Canon (unspecified)", "3.1"))
+        self.assertIsNone(P("Worm", "sometime"))
+        self.assertIsNone(P("Worm", ""))
+
+    def test_order_runs_across_stories(self):
+        rows = [("Worm", "30.1"), ("Worm", "e.2"), ("PRT Quest", "2.1"), ("Glow-worm", "P.1"), ("Ward", "1.1")]
+        capes = [dict(id=str(i), name=str(i), _row=i, series=s, firstseen=f) for i, (s, f) in enumerate(rows)]
+        bd.assign_arcs(capes, lambda w: None)
+        orders = [c["arcOrder"] for c in capes]
+        self.assertEqual(orders, sorted(orders))
+        self.assertEqual(len(set(orders)), len(orders))
+        self.assertEqual([c["arc"] for c in capes], ["Worm 30", "Worm epilogue", "PRT Quest 2", "Glow-worm P.1", "Ward 1"])
+
+
 class Completeness(unittest.TestCase):
     def cape(self, **over):
         base = dict(name="Test", aliases=[], civilian="", description="", series="Worm", disposition="Hero",
@@ -183,13 +208,14 @@ class RealWorkbook(unittest.TestCase):
         self.assertEqual(data["title"], "Wormdle")
         by_id = {c["id"]: c for c in data["capes"]}
         fields = [c["field"] for c in data["clues"]]
-        self.assertEqual(len(fields), 6)
+        self.assertEqual(fields[:6], ["disposition", "type", "gender", "status", "team", "power"])
+        self.assertEqual(fields[6:], ["arc"])
         for mode, tokens in data["schedule"].items():
             self.assertGreater(len(tokens), 300)
             for t in tokens[:30]:
                 cape = by_id[bd.decode_id(t)]
                 self.assertIn(mode, cape["pool"])
-                for f in fields:
+                for f in (fields if mode == "lineup" else fields[:6]):   # Power file doesn't need the arc
                     self.assertTrue(cape.get(f), f"{cape['name']} lacks {f}")
         names = [bd.fold(c["name"]) for c in data["capes"]]
         self.assertEqual(len(names), len(set(names)), "duplicate cape names")

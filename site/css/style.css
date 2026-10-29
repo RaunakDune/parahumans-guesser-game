@@ -409,6 +409,7 @@ main {
   hyphens: auto;
 }
 .tile-mark { font-weight: 700; font-size: var(--s0); line-height: 1; }
+.tile-mark-arrow { font-size: .8em; letter-spacing: 0; }
 .tile-match { background: var(--match); }
 .tile-near { background: var(--near); }
 .tile-miss { background: var(--miss); }
@@ -417,6 +418,7 @@ main {
 .lineup-legend .k-match::before { background: var(--match); }
 .lineup-legend .k-near::before { background: var(--near); }
 .lineup-legend .k-miss::before { background: var(--miss); }
+.lineup-legend .k-arrow::before { display: none; }
 .lineup-scroll { overflow-x: auto; position: relative; }
 .tile { position: relative; }
 /* Values with a long word (Slaughterhouse, Protectorate) step down a size so they fit the tile. */

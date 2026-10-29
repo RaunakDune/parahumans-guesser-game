@@ -70,6 +70,7 @@ ROSTER_FIELDS = {
     "civilian": "civilian name",
     "description": "power description",
     "cluster": "cluster",
+    "firstseen": "first mentioned",
 }
 NO_CLUSTER = "NONE"   # Cluster column: the cluster's name, or NONE; blank means not checked yet
 UNNAMED_CLUSTER = "Yes"   # in a cluster whose name isn't known
@@ -83,7 +84,22 @@ CLUE_FIELDS = {
     "status": "status",
     "team": "team",
     "power": "power",
+    "first appearance": "arc",
+    "arc": "arc",
 }
+ARC_CLUE = {"field": "arc", "label": "First appearance",
+            "rule": "Arc of first appearance; arrows point to the answer's arc, amber means within 2 arcs"}
+
+# Stories in reading order, with how many arcs each has (more are allowed if the sheet
+# shows them). Arc numbers run on across stories, so closeness and the arrows work
+# from the end of Worm into Ward too.
+STORIES = [            # (name, arcs, has an epilogue after the last arc)
+    ("Worm", 30, True),
+    ("PRT Quest", 0, False),
+    ("Glow-worm", 6, False),
+    ("Ward", 20, True),
+]
+ARC_CLOSE = 2          # within this many arcs counts as close (amber)
 
 # Lists sheet heading -> roster field whose values it constrains.
 LIST_FIELDS = {
@@ -97,6 +113,7 @@ LIST_FIELDS = {
 
 # Values the game always accepts, on top of whatever the Lists sheet allows.
 ALWAYS_ALLOWED = {
+    "series": {name for name, _, _ in STORIES},
     "disposition": {"Unknown", "Non-cape"},
     "status": {"Unknown"},
     "gender": {"Unknown"},
@@ -282,6 +299,71 @@ def read_clues(wb) -> list[dict]:
     return clues
 
 
+def canonical_series(value: str) -> str:
+    """'Glow-Worm', 'glowworm' -> 'Glow-worm'; 'prt quest' -> 'PRT Quest'. Anything else is left as written."""
+    for name, _, _ in STORIES:
+        if fold(value) == fold(name):
+            return name
+    return value
+
+
+def parse_first_seen(series: str, raw: str):
+    """First mentioned + Series -> (story, arc) or None.
+
+    '8.01' / '16.z' / 'Interlude 12' / 'Interlude 11h' -> that arc of the cape's story.
+    'P.2' is Glow-worm (Ward's prologue), whatever the Series says. 'e.1' is the epilogue."""
+    text = (raw or "").strip()
+    if not text:
+        return None
+    if re.match(r"(?i)^p\s*\.?\s*(\d+)", text):
+        return ("Glow-worm", int(re.match(r"(?i)^p\s*\.?\s*(\d+)", text).group(1)))
+    story = canonical_series(series)
+    if story not in {name for name, _, _ in STORIES}:
+        return None
+    if re.match(r"(?i)^e(pilogue)?\b|^e\s*\.", text):
+        return (story, "epilogue")
+    m = re.match(r"(?i)^(?:interlude\s*)?(\d+)", text)
+    return (story, int(m.group(1))) if m else None
+
+
+def assign_arcs(capes: list[dict], warn) -> None:
+    """Fill cape['arc'] (shown on the tile) and cape['arcOrder'] (position across all stories)."""
+    parsed = {}
+    for c in capes:
+        if not c.get("firstseen"):
+            continue
+        got = parse_first_seen(c["series"], c["firstseen"])
+        if got:
+            parsed[c["id"]] = got
+        else:
+            warn(f"row {c['_row']} {c['name']}: can't place First mentioned '{c['firstseen']}' "
+                 f"(series '{c['series'] or 'blank'}') in an arc")
+    seen = {}
+    for story, arc in parsed.values():
+        if isinstance(arc, int):
+            seen[story] = max(seen.get(story, 0), arc)
+    offsets, start = {}, 0
+    lengths = {}
+    for name, arcs, epilogue in STORIES:
+        lengths[name] = max(arcs, seen.get(name, 0))
+        offsets[name] = start
+        start += lengths[name] + (1 if epilogue else 0)
+    for c in capes:
+        got = parsed.get(c["id"])
+        if not got:
+            c["arc"], c["arcOrder"] = "", None
+            continue
+        story, arc = got
+        if arc == "epilogue":
+            c["arc"], c["arcOrder"] = f"{story} epilogue", offsets[story] + lengths[story] + 1
+        else:
+            c["arc"] = f"{story} P.{arc}" if story == "Glow-worm" else f"{story} {arc}"
+            c["arcOrder"] = offsets[story] + arc
+        if story == "Glow-worm" and c["series"] not in ("Glow-worm", "Ward"):
+            warn(f"row {c['_row']} {c['name']}: First mentioned '{c['firstseen']}' is a Glow-worm chapter "
+                 f"but Series says '{c['series'] or 'blank'}'")
+
+
 def clean_cluster(value: str) -> str:
     """'The Mall Cluster' stays as written; NONE / none / No / - all mean not a cluster cape."""
     if value.strip() == "-" or fold(value) in ("none", "no", "n", "na", "nocluster", "notacluster"):
@@ -313,7 +395,8 @@ def read_roster(wb, allowed: dict[str, set[str]], warn) -> list[dict]:
         cape = {
             "name": name,
             "aliases": [a for a in split_list(get("aliases")) if fold(a) != fold(name)],
-            "series": get("series"),
+            "series": canonical_series(get("series")),
+            "firstseen": get("firstseen"),
             "disposition": NON_CAPE if fold(get("disposition")) == "noncape" else get("disposition"),
             "type": get("type"),
             "gender": get("gender"),
@@ -353,7 +436,7 @@ def merge_duplicates(capes: list[dict], warn) -> list[dict]:
         keep = by_key[key]
         filled = lambda c: sum(bool(c[f]) for f in REQUIRED_FIELDS)
         winner, loser = (keep, cape) if filled(keep) >= filled(cape) else (cape, keep)
-        for f in REQUIRED_FIELDS + ("civilian", "description", "rating", "cluster"):
+        for f in REQUIRED_FIELDS + ("civilian", "description", "rating", "cluster", "firstseen"):
             if not winner[f] and loser[f]:
                 winner[f] = loser[f]
         if fold(loser["name"]) != fold(winner["name"]) or loser["name"] != winner["name"]:
@@ -519,6 +602,10 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
     capes = merge_duplicates(capes, warn)
     assign_ids_and_groups(capes)
     mark_pools(capes, warn)
+    assign_arcs(capes, warn)
+    if not any(c["field"] == "arc" for c in clues) and any(c["arc"] for c in capes):
+        clues.append(dict(ARC_CLUE))
+    has_arc_clue = any(c["field"] == "arc" for c in clues)
     lineup_fields = [c["field"] for c in clues]
     twins = find_lineup_twins(capes, lineup_fields)
     reported = set()
@@ -543,7 +630,8 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
     offset = parse_offset(settings["reset_label"])
     today = game_date(now_utc, offset)
     pools = {
-        "lineup": [c["id"] for c in capes if c["eligible"] and c["id"] not in twins],
+        "lineup": [c["id"] for c in capes if c["eligible"] and c["id"] not in twins
+                   and (c["arc"] or not has_arc_clue)],
         "power": [c["id"] for c in capes if c["powerEligible"]],
     }
     known_ids = {c["id"] for c in capes}
@@ -574,6 +662,7 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
             "resetOffsetMinutes": offset,
             "launch": schedule["launch"],
             "edition": schedule["edition"],
+            "arcClose": ARC_CLOSE,
         },
         "clues": clues,
         "powerClasses": POWER_CLASSES,
@@ -583,9 +672,10 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
                 "series": c["series"], "disposition": c["disposition"], "type": c["type"],
                 "gender": c["gender"], "status": c["status"], "team": c["team"], "power": c["power"],
                 "hybrid": c["hybrid"], "rating": c["rating"], "civilian": c["civilian"],
-                "description": c["description"], "cluster": c.get("cluster", ""), "powerClue": c["powerClue"] if c["powerEligible"] else "",
+                "description": c["description"], "cluster": c.get("cluster", ""),
+                "arc": c["arc"], "arcOrder": c["arcOrder"], "powerClue": c["powerClue"] if c["powerEligible"] else "",
                 "pool": [m for m in MODES if c["id"] in pools[m]],
-                "complete": c["complete"] or None,
+                "complete": (c["complete"] and (bool(c["arc"]) or not has_arc_clue)) or None,
             }.items() if v not in ("", [], None)}
             for c in sorted(capes, key=lambda c: fold(c["name"]))
         ],
