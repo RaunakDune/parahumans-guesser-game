@@ -68,7 +68,7 @@ class Arcs(unittest.TestCase):
         orders = [c["arcOrder"] for c in capes]
         self.assertEqual(orders, sorted(orders))
         self.assertEqual(len(set(orders)), len(orders))
-        self.assertEqual([c["arc"] for c in capes], ["Worm 30", "Worm epilogue", "PRT Quest 2", "Glow-worm P.1", "Ward 1"])
+        self.assertEqual([c["arc"] for c in capes], ["Worm Arc 30", "Worm epilogue", "PRT Quest Arc 2", "Glow-worm P.1", "Ward Arc 1"])
 
 
 class Completeness(unittest.TestCase):

@@ -470,7 +470,8 @@ function renderLineup(puzzle) {
         const longest = Math.max(...value.split(/[\s/]+/).map((w) => w.replace(/\u200b/g, "").length));
         const total = value.replace(/\u200b/g, "").length;
         // Long values step down a size so they fit the fixed tile height.
-        const size = total > 20 || longest > 10 ? " tile-xlong" : longest > 8 ? " tile-long" : "";
+        const size = clue.field === "arc" && /Arc \d+$/.test(value) ? " tile-arc"   // "Worm Arc 14" stays on one line
+          : total > 20 || longest > 10 ? " tile-xlong" : longest > 8 ? " tile-long" : "";
         return h("td", {},
           h("div", { class: `tile tile-${result}${size}`, title: `${clue.label}: ${value.replace(/\u200b/g, "")} (${tileWord(clue.field, result, guess, answer)})` },
             h("span", { class: "tile-mark" + (clue.field === "arc" && arcDirection(guess, answer) ? " tile-mark-arrow" : ""), "aria-hidden": "true" }, tileMark(clue.field, result, guess, answer)),
