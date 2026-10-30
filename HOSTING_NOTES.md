@@ -30,7 +30,7 @@ If you ever turn on Cloudflare's proxy (orange cloud) for these records, set Clo
 ## Link-preview image
 
 The `og:image` and `twitter:image` tags in `site/index.html` load the preview picture from
-`https://www.wormdle.me/assets/og-image.png?v=2`. When you replace the picture, bump the `?v=` number in both tags so
+`https://www.wormdle.me/assets/og-image.png?v=3`. When you replace the picture, bump the `?v=` number in both tags so
 sites fetch the new one. Discord and other sites cache previews, so after changing the
 picture or its tags, test with a new query string on the link, such as `https://www.wormdle.me/?v=3`.
 
