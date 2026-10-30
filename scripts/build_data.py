@@ -101,6 +101,12 @@ STORIES = [            # (name, arcs, has an epilogue after the last arc)
 ]
 ARC_CLOSE = 2          # within this many arcs counts as close (amber)
 
+# Named arcs that sit between numbered ones: story -> {chapter prefix: (name, comes after arc N)}.
+# Ward's Eclipse arc has chapters x.1, x.2, ... and falls between Arc 7 and Arc 8.
+EXTRA_ARCS = {
+    "Ward": {"x": ("Eclipse", 7)},
+}
+
 # Lists sheet heading -> roster field whose values it constrains.
 LIST_FIELDS = {
     "disposition": "disposition",
@@ -322,6 +328,9 @@ def parse_first_seen(series: str, raw: str):
         return None
     if re.match(r"(?i)^e(pilogue)?\b|^e\s*\.", text):
         return (story, "epilogue")
+    for prefix, (name, _) in EXTRA_ARCS.get(story, {}).items():
+        if re.match(rf"(?i)^{re.escape(prefix)}\s*\.", text):
+            return (story, name)
     m = re.match(r"(?i)^(?:interlude\s*)?(\d+)", text)
     return (story, int(m.group(1))) if m else None
 
@@ -345,9 +354,16 @@ def assign_arcs(capes: list[dict], warn) -> None:
     offsets, start = {}, 0
     lengths = {}
     for name, arcs, epilogue in STORIES:
-        lengths[name] = max(arcs, seen.get(name, 0))
+        # lengths count every step in the story, named in-between arcs included
+        lengths[name] = max(arcs, seen.get(name, 0)) + len(EXTRA_ARCS.get(name, {}))
         offsets[name] = start
         start += lengths[name] + (1 if epilogue else 0)
+
+    def step(story, arc):
+        """Position of a numbered arc within its story, leaving room for named in-between arcs."""
+        return arc + sum(1 for _, after in EXTRA_ARCS.get(story, {}).values() if arc > after)
+
+    named = {(story, name): after for story, extra in EXTRA_ARCS.items() for name, after in extra.values()}
     for c in capes:
         got = parsed.get(c["id"])
         if not got:
@@ -356,9 +372,11 @@ def assign_arcs(capes: list[dict], warn) -> None:
         story, arc = got
         if arc == "epilogue":
             c["arc"], c["arcOrder"] = f"{story} epilogue", offsets[story] + lengths[story] + 1
+        elif (story, arc) in named:
+            c["arc"], c["arcOrder"] = f"{story} {arc}", offsets[story] + step(story, named[(story, arc)]) + 1
         else:
             c["arc"] = f"{story} P.{arc}" if story == "Glow-worm" else f"{story} Arc {arc}"
-            c["arcOrder"] = offsets[story] + arc
+            c["arcOrder"] = offsets[story] + step(story, arc)
         if story == "Glow-worm" and c["series"] not in ("Glow-worm", "Ward"):
             warn(f"row {c['_row']} {c['name']}: First mentioned '{c['firstseen']}' is a Glow-worm chapter "
                  f"but Series says '{c['series'] or 'blank'}'")
