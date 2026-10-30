@@ -57,9 +57,19 @@ class Arcs(unittest.TestCase):
         self.assertEqual(P("Glow-Worm", "P.3"), ("Glow-worm", 3))
         self.assertEqual(P("Ward", "P.2"), ("Glow-worm", 2))      # Glow-worm chapters filed under Ward
         self.assertEqual(P("Worm", "e.1"), ("Worm", "epilogue"))
+        self.assertEqual(P("Ward", "x.1"), ("Ward", "Eclipse"))
+        self.assertIsNone(P("Worm", "x.1"))
         self.assertIsNone(P("Canon (unspecified)", "3.1"))
         self.assertIsNone(P("Worm", "sometime"))
         self.assertIsNone(P("Worm", ""))
+
+    def test_eclipse_sits_between_ward_7_and_8(self):
+        rows = [("Ward", "7.3"), ("Ward", "x.2"), ("Ward", "8.1"), ("Ward", "9.1")]
+        capes = [dict(id=str(i), name=str(i), _row=i, series=s, firstseen=f) for i, (s, f) in enumerate(rows)]
+        bd.assign_arcs(capes, lambda w: None)
+        self.assertEqual([c["arc"] for c in capes], ["Ward Arc 7", "Ward Eclipse", "Ward Arc 8", "Ward Arc 9"])
+        o = [c["arcOrder"] for c in capes]
+        self.assertEqual([b - a for a, b in zip(o, o[1:])], [1, 1, 1])
 
     def test_order_runs_across_stories(self):
         rows = [("Worm", "30.1"), ("Worm", "e.2"), ("PRT Quest", "2.1"), ("Glow-worm", "P.1"), ("Ward", "1.1")]
