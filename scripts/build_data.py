@@ -357,7 +357,7 @@ def assign_arcs(capes: list[dict], warn) -> None:
         if arc == "epilogue":
             c["arc"], c["arcOrder"] = f"{story} epilogue", offsets[story] + lengths[story] + 1
         else:
-            c["arc"] = f"{story} P.{arc}" if story == "Glow-worm" else f"{story} {arc}"
+            c["arc"] = f"{story} P.{arc}" if story == "Glow-worm" else f"{story} Arc {arc}"
             c["arcOrder"] = offsets[story] + arc
         if story == "Glow-worm" and c["series"] not in ("Glow-worm", "Ward"):
             warn(f"row {c['_row']} {c['name']}: First mentioned '{c['firstseen']}' is a Glow-worm chapter "
