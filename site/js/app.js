@@ -307,10 +307,9 @@ function describeOpened(mode, misses, answer) {
     + (note ? ` New note, ${note.label}: ${note.value(answer)}.` : "");
 }
 
+// The story the cape first appears in (the build works it out from Series and First mentioned).
 function seriesText(cape) {
-  if (cape.series === "Worm" || cape.series === "PRT Quest") return cape.series;
-  if (cape.series === "Ward" || cape.series === "Glow-worm") return "Ward";   // Glow-worm counts as Ward
-  return "Not on file";
+  return cape.introduced || "Not on file";
 }
 
 // Cluster column: a cluster's name, or NONE; blank means it hasn't been checked yet.

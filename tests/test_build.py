@@ -60,6 +60,8 @@ class Arcs(unittest.TestCase):
         self.assertEqual(P("Ward", "x.1"), ("Ward", "Eclipse"))
         self.assertIsNone(P("Worm", "x.1"))
         self.assertIsNone(P("Canon (unspecified)", "3.1"))
+        self.assertEqual(P("PRT Quest", ""), ("PRT Quest", None))
+        self.assertEqual(P("PHO Sunday", None), ("PHO Sunday", None))
         self.assertIsNone(P("Worm", "sometime"))
         self.assertIsNone(P("Worm", ""))
 
@@ -72,13 +74,17 @@ class Arcs(unittest.TestCase):
         self.assertEqual([b - a for a, b in zip(o, o[1:])], [1, 1, 1])
 
     def test_order_runs_across_stories(self):
-        rows = [("Worm", "30.1"), ("Worm", "e.2"), ("PRT Quest", "2.1"), ("Glow-worm", "P.1"), ("Ward", "1.1")]
+        rows = [("Worm", "30.1"), ("Worm", "e.2"), ("PRT Quest", ""), ("Glow-worm", "P.1"), ("Ward", "1.1"),
+                ("Ward", "e.1"), ("PHO Sunday", "")]
         capes = [dict(id=str(i), name=str(i), _row=i, series=s, firstseen=f) for i, (s, f) in enumerate(rows)]
         bd.assign_arcs(capes, lambda w: None)
         orders = [c["arcOrder"] for c in capes]
         self.assertEqual(orders, sorted(orders))
         self.assertEqual(len(set(orders)), len(orders))
-        self.assertEqual([c["arc"] for c in capes], ["Worm Arc 30", "Worm epilogue", "PRT Quest Arc 2", "Glow-worm P.1", "Ward Arc 1"])
+        self.assertEqual([c["arc"] for c in capes], ["Worm Arc 30", "Worm epilogue", "PRT Quest", "Glow-worm P.1", "Ward Arc 1",
+                                                 "Ward epilogue", "PHO Sunday"])
+        self.assertEqual([c["introduced"] for c in capes],
+                         ["Worm", "Worm", "PRT Quest", "Glow-worm", "Ward", "Ward", "PHO Sunday"])
 
 
 class Completeness(unittest.TestCase):
