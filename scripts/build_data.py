@@ -98,7 +98,10 @@ STORIES = [            # (name, arcs, has an epilogue after the last arc)
     ("PRT Quest", 0, False),
     ("Glow-worm", 6, False),
     ("Ward", 20, True),
+    ("PHO Sunday", 0, False),
 ]
+# Stories that count as a single step with no arc numbers: the tile just names the story.
+WHOLE_STORIES = {"PRT Quest", "PHO Sunday"}
 ARC_CLOSE = 2          # within this many arcs counts as close (amber)
 
 # Named arcs that sit between numbered ones: story -> {chapter prefix: (name, comes after arc N)}.
@@ -319,6 +322,9 @@ def parse_first_seen(series: str, raw: str):
     '8.01' / '16.z' / 'Interlude 12' / 'Interlude 11h' -> that arc of the cape's story.
     'P.2' is Glow-worm (Ward's prologue), whatever the Series says. 'e.1' is the epilogue."""
     text = (raw or "").strip()
+    whole = canonical_series(series)
+    if whole in WHOLE_STORIES:
+        return (whole, None)          # PRT Quest / PHO Sunday: the story is the whole answer
     if not text:
         return None
     if re.match(r"(?i)^p\s*\.?\s*(\d+)", text):
@@ -339,7 +345,7 @@ def assign_arcs(capes: list[dict], warn) -> None:
     """Fill cape['arc'] (shown on the tile) and cape['arcOrder'] (position across all stories)."""
     parsed = {}
     for c in capes:
-        if not c.get("firstseen"):
+        if not c.get("firstseen") and canonical_series(c["series"]) not in WHOLE_STORIES:
             continue
         got = parse_first_seen(c["series"], c["firstseen"])
         if got:
@@ -355,7 +361,7 @@ def assign_arcs(capes: list[dict], warn) -> None:
     lengths = {}
     for name, arcs, epilogue in STORIES:
         # lengths count every step in the story, named in-between arcs included
-        lengths[name] = max(arcs, seen.get(name, 0)) + len(EXTRA_ARCS.get(name, {}))
+        lengths[name] = 1 if name in WHOLE_STORIES else max(arcs, seen.get(name, 0)) + len(EXTRA_ARCS.get(name, {}))
         offsets[name] = start
         start += lengths[name] + (1 if epilogue else 0)
 
@@ -368,9 +374,13 @@ def assign_arcs(capes: list[dict], warn) -> None:
         got = parsed.get(c["id"])
         if not got:
             c["arc"], c["arcOrder"] = "", None
+            c["introduced"] = c["series"] if c["series"] in {n for n, _, _ in STORIES} else ""
             continue
         story, arc = got
-        if arc == "epilogue":
+        c["introduced"] = story          # the story the arc belongs to (P.x is Glow-worm even if filed under Ward)
+        if arc is None:
+            c["arc"], c["arcOrder"] = story, offsets[story] + 1
+        elif arc == "epilogue":
             c["arc"], c["arcOrder"] = f"{story} epilogue", offsets[story] + lengths[story] + 1
         elif (story, arc) in named:
             c["arc"], c["arcOrder"] = f"{story} {arc}", offsets[story] + step(story, named[(story, arc)]) + 1
@@ -691,7 +701,7 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
                 "gender": c["gender"], "status": c["status"], "team": c["team"], "power": c["power"],
                 "hybrid": c["hybrid"], "rating": c["rating"], "civilian": c["civilian"],
                 "description": c["description"], "cluster": c.get("cluster", ""),
-                "arc": c["arc"], "arcOrder": c["arcOrder"], "powerClue": c["powerClue"] if c["powerEligible"] else "",
+                "arc": c["arc"], "arcOrder": c["arcOrder"], "introduced": c.get("introduced", ""), "powerClue": c["powerClue"] if c["powerEligible"] else "",
                 "pool": [m for m in MODES if c["id"] in pools[m]],
                 "complete": (c["complete"] and (bool(c["arc"]) or not has_arc_clue)) or None,
             }.items() if v not in ("", [], None)}
