@@ -158,10 +158,13 @@ function currentPuzzle() {
   };
 }
 
+// Practice "From" filter: the story the cape first appears in, as in the "Introduced in" note.
+const PRACTICE_STORIES = ["Worm", "PRT Quest", "Glow-worm", "Ward", "PHO Sunday"];
+
 function randomAnswer(mode, series) {
   let pool = poolFor(mode);
-  if (series === "Worm" || series === "Ward") {
-    const narrowed = pool.filter((c) => c.series === series);
+  if (PRACTICE_STORIES.includes(series)) {
+    const narrowed = pool.filter((c) => c.introduced === series);
     if (narrowed.length) pool = narrowed;
   }
   return pool[Math.floor(Math.random() * pool.length)];
@@ -436,7 +439,9 @@ function renderHead(puzzle) {
     const series = h("select", {
       id: "series-pick",
       onchange: (e) => { p.series = e.target.value; newPractice(); },
-    }, h("option", { value: "any" }, "Worm and Ward"), h("option", { value: "Worm" }, "Worm only"), h("option", { value: "Ward" }, "Ward only"));
+    }, h("option", { value: "any" }, "Every story"),
+      PRACTICE_STORIES.filter((s) => poolFor(puzzle.mode).some((c) => c.introduced === s))
+        .map((s) => h("option", { value: s }, `${s} only`)));
     series.value = p.series;
     kids.push(h("div", { class: "file-pick" }, h("label", { for: "series-pick" }, "From"), series));
   }
@@ -630,7 +635,7 @@ function renderReport(puzzle) {
   const aka = [...(answer.aliases || [])];
   const facts = game.clues.map((c) => [c.label, display(c.field, answer)]);
   if (answer.hybrid?.length) facts.push(["Also rated", answer.hybrid.join(", ")]);
-  if (answer.series) facts.push(["Introduced in", answer.series === "Canon (unspecified)" ? "Worm or Ward" : answer.series]);
+  if (answer.introduced || answer.series) facts.push(["Introduced in", answer.introduced || (answer.series === "Canon (unspecified)" ? "Worm or Ward" : answer.series)]);
   // "Yes" in the Cluster column: they were in a cluster, but its name isn't known.
   if (answer.cluster && answer.cluster !== "NONE") {
     facts.push(["Cluster", answer.cluster === "Yes" ? "Yes (name not on file)" : answer.cluster]);
