@@ -404,21 +404,32 @@ function render() {
 }
 
 function renderHead(puzzle) {
-  const options = [h("option", { value: "today" }, `Today's file, #${today}`)];
+  // Today and Practice sit at the top; the archive grows underneath in its own group.
+  const archive = [];
   for (let n = today - 1; n >= 1; n--) {
     const p = (store.data.progress?.[puzzle.mode] || {})[n];
     const result = p?.done ? (p.won ? ", solved" : p.revealed ? ", revealed" : ", unsolved") : "";
-    options.push(h("option", { value: `archive:${n}` }, `#${n}, ${shortDate(dateOfPuzzle(game.config.launch, n))}${result}`));
+    archive.push(h("option", { value: `archive:${n}` }, `#${n}, ${shortDate(dateOfPuzzle(game.config.launch, n))}${result}`));
   }
-  options.push(h("option", { value: "practice" }, "Practice, random cape"));
-  const select = h("select", { id: "file-pick", onchange: (e) => { state.pick = e.target.value; state.error = ""; render(); } }, options);
+  const options = [
+    h("option", { value: "today" }, `Today's file, #${today}`),
+    h("option", { value: "practice" }, "Practice, random cape"),
+    archive.length ? h("optgroup", { label: "Archive" }, archive) : null,
+  ];
+  const pick = (value) => { state.pick = value; state.error = ""; render(); };
+  const select = h("select", { id: "file-pick", onchange: (e) => pick(e.target.value) }, options);
   select.value = state.pick;
+  const inPractice = puzzle.kind === "practice";
+  const practiceButton = h("button", {
+    type: "button", class: "button button-small practice-toggle",
+    onclick: () => pick(inPractice ? "today" : "practice"),
+  }, inPractice ? "Back to today" : "Practice");
 
   const kids = [
     h("p", { class: "file-title" },
       `${MODES[puzzle.mode].file}, `,
       puzzle.kind === "practice" ? "practice file" : `file ${String(puzzle.number).padStart(4, "0")}`),
-    h("div", { class: "file-pick" }, h("label", { for: "file-pick" }, "Open"), select),
+    h("div", { class: "file-pick" }, h("label", { for: "file-pick" }, "Open"), select, practiceButton),
   ];
   if (puzzle.kind === "practice") {
     const p = state.practice[puzzle.mode];

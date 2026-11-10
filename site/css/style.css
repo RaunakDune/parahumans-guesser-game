@@ -236,6 +236,8 @@ main {
 .file-title { margin: 0; font-weight: 700; font-size: var(--s0); }
 .file-pick { display: flex; align-items: baseline; gap: 8px; font-size: var(--s-1); }
 .file-pick label { color: var(--ink-soft); }
+.file-pick { flex-wrap: wrap; }
+.practice-toggle { align-self: center; white-space: nowrap; }
 .file-pick select {
   font: inherit;
   font-size: var(--s-1);
