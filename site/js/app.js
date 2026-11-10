@@ -228,6 +228,16 @@ function display(field, cape) {
   return value;
 }
 
+// Power file hint: the main class plus the secondary ones from "Hybrid / sub-ratings",
+// e.g. "Breaker" with "also Changer, Blaster, Striker and Mover" underneath.
+function powerWithSubRatings(cape) {
+  const main = display("power", cape);
+  const extra = (cape.hybrid || []).filter((x) => x && x !== cape.power);
+  if (!cape.power || !extra.length) return main;
+  const list = extra.length === 1 ? extra[0] : `${extra.slice(0, -1).join(", ")} and ${extra.at(-1)}`;
+  return [main, h("span", { class: "also" }, `also ${list}`)];
+}
+
 // ---------------------------------------------------------------- guessing
 
 function submitGuess(cape) {
@@ -299,7 +309,9 @@ function revealControl(puzzle) {
 function describeOpened(mode, misses, answer) {
   if (mode === "power") {
     const hint = POWER_HINTS.find((x) => x.after === misses);
-    return hint ? `New note, ${labelFor(hint.field)}: ${display(hint.field, answer)}.` : "";
+    if (!hint) return "";
+    const value = hint.field === "power" ? [powerWithSubRatings(answer)].flat().map((x) => x.textContent ?? x).join(", ") : display(hint.field, answer);
+    return `New note, ${labelFor(hint.field)}: ${value}.`;
   }
   const guess = byId.get(currentPuzzle().progress.g.at(-1));
   const note = LINEUP_HINTS.find((x) => x.after === misses);
@@ -445,7 +457,8 @@ function renderPower(puzzle) {
     if (i < pieces.length - 1) text.push(redaction(7, "a name, blacked out"));
   });
   const hints = notesList(POWER_HINTS.map((x) => ({ ...x, width: BAR_WIDTH[x.field] || 8 })), misses, progress.done,
-    (hint) => display(hint.field, answer), (hint) => labelFor(hint.field));
+    (hint) => hint.field === "power" ? powerWithSubRatings(answer) : display(hint.field, answer),
+    (hint) => labelFor(hint.field));
   return [
     h("p", { class: "power-text" }, text),
     hints,
