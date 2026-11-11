@@ -92,6 +92,17 @@
   </ul>
 </dialog>
 
+<dialog id="dialog-archive" class="memo memo-archive" aria-labelledby="archive-title">
+  <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
+  <h2 id="archive-title">Archive</h2>
+  <p id="archive-summary" class="archive-summary"></p>
+  <div id="archive-body"></div>
+  <p class="archive-key" aria-hidden="true">
+    <span class="k k-solved">✓ solved</span> <span class="k k-revealed">⚑ revealed</span>
+    <span class="k k-unsolved">✗ unsolved</span> <span class="k k-started">… in progress</span>
+  </p>
+</dialog>
+
 <dialog id="dialog-stats" class="memo" aria-labelledby="stats-title">
   <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
   <h2 id="stats-title">Your record</h2>

@@ -410,6 +410,106 @@ function render() {
   if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
 }
 
+// ---------------------------------------------------------------- archive calendar
+// A month-by-month calendar of daily files for the current mode, coloured by the
+// player's result. Weeks start on Monday. Arrow keys move between days.
+
+const archive = { year: 0, month: 0 };   // month on show (UTC calendar of puzzle dates)
+
+function fileResult(mode, n) {
+  const p = (store.data.progress?.[mode] || {})[n];
+  if (p?.done) return p.won ? "solved" : p.revealed ? "revealed" : "unsolved";
+  return p?.g?.length ? "started" : "unplayed";
+}
+const RESULT_MARK = { solved: "✓", revealed: "⚑", unsolved: "✗", started: "…", unplayed: "" };
+const RESULT_WORD = { solved: "solved", revealed: "answer revealed", unsolved: "unsolved", started: "in progress", unplayed: "not played" };
+
+function numberOnDate(y, m, d) {
+  return Math.round((Date.UTC(y, m, d) - Date.parse(game.config.launch + "T00:00:00Z")) / 86400000) + 1;
+}
+
+function openArchive() {
+  const current = currentPuzzle();
+  const shown = dateOfPuzzle(game.config.launch, current.kind === "archive" ? current.number : today);
+  archive.year = shown.getUTCFullYear();
+  archive.month = shown.getUTCMonth();
+  renderArchive();
+  const dialog = $("#dialog-archive");
+  dialog.addEventListener("close", () => $("#archive-open")?.focus({ preventScroll: true }), { once: true });
+  openDialog(dialog);
+  ($("#archive-grid [aria-current=true]") || $("#archive-grid .day-today") || $("#archive-grid button:not([disabled])"))?.focus();
+}
+
+function renderArchive(focusNumber) {
+  const mode = state.mode;
+  const current = currentPuzzle();
+  const first = dateOfPuzzle(game.config.launch, 1), last = dateOfPuzzle(game.config.launch, today);
+  const monthStart = Date.UTC(archive.year, archive.month, 1);
+  const label = new Date(monthStart).toLocaleDateString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
+
+  const counts = { solved: 0, revealed: 0, unsolved: 0 };
+  for (let n = 1; n <= today; n++) { const r = fileResult(mode, n); if (r in counts) counts[r]++; }
+  const closed = counts.solved + counts.revealed + counts.unsolved;
+  $("#archive-title").textContent = `${MODES[mode].tab} archive`;
+  $("#archive-summary").textContent = `${closed} of ${today} files closed: ${counts.solved} solved`
+    + (counts.revealed ? `, ${counts.revealed} revealed` : "") + (counts.unsolved ? `, ${counts.unsolved} unsolved` : "") + ".";
+
+  const canPrev = monthStart > Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), 1);
+  const canNext = monthStart < Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), 1);
+  const step = (delta) => {
+    const d = new Date(Date.UTC(archive.year, archive.month + delta, 1));
+    archive.year = d.getUTCFullYear(); archive.month = d.getUTCMonth();
+    renderArchive();
+  };
+
+  const days = new Date(Date.UTC(archive.year, archive.month + 1, 0)).getUTCDate();
+  const lead = (new Date(monthStart).getUTCDay() + 6) % 7;   // Monday first
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push(h("span", { class: "day day-blank", "aria-hidden": "true" }));
+  for (let d = 1; d <= days; d++) {
+    const n = numberOnDate(archive.year, archive.month, d);
+    if (n < 1 || n > today) {
+      cells.push(h("span", { class: "day day-off", "aria-hidden": "true" }, h("span", { class: "day-num" }, d)));
+      continue;
+    }
+    const result = fileResult(mode, n);
+    const isCurrent = current.kind !== "practice" && current.number === n;
+    cells.push(h("button", {
+      type: "button", class: `day day-${result}${n === today ? " day-today" : ""}`,
+      "data-n": n, "aria-current": isCurrent ? "true" : null, tabindex: "-1",
+      "aria-label": `${MODES[mode].tab} #${n}, ${shortDate(dateOfPuzzle(game.config.launch, n))}${n === today ? ", today" : ""}, ${RESULT_WORD[result]}`,
+      onclick: () => { $("#dialog-archive").close(); pickFile(n === today ? "today" : `archive:${n}`); },
+    }, h("span", { class: "day-num" }, d), h("span", { class: "day-file" }, `#${n}`),
+      h("span", { class: "day-mark", "aria-hidden": "true" }, RESULT_MARK[result])));
+  }
+  const grid = h("div", { class: "archive-grid", id: "archive-grid", role: "group", "aria-label": label, onkeydown: archiveKeys },
+    ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => h("span", { class: "weekday", "aria-hidden": "true" }, w)), cells);
+  $("#archive-body").replaceChildren(
+    h("div", { class: "archive-nav" },
+      h("button", { type: "button", class: "button button-small", "aria-label": "Previous month", disabled: !canPrev, onclick: () => step(-1) }, "◀"),
+      h("h3", { "aria-live": "polite" }, label),
+      h("button", { type: "button", class: "button button-small", "aria-label": "Next month", disabled: !canNext, onclick: () => step(1) }, "▶")),
+    grid);
+  // one day button is in the Tab order (the current file, today, or the last day shown)
+  const tabStop = grid.querySelector(`[data-n="${focusNumber}"]`) || grid.querySelector("[aria-current=true]")
+    || grid.querySelector(".day-today") || [...grid.querySelectorAll("button")].at(-1);
+  if (tabStop) tabStop.tabIndex = 0;
+  if (focusNumber && tabStop) tabStop.focus();
+}
+
+function archiveKeys(e) {
+  const move = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+  const from = Number(e.target.dataset?.n);
+  if (!move || !from) return;
+  e.preventDefault();
+  const to = Math.min(today, Math.max(1, from + move));
+  const date = dateOfPuzzle(game.config.launch, to);
+  if (date.getUTCFullYear() !== archive.year || date.getUTCMonth() !== archive.month) {
+    archive.year = date.getUTCFullYear(); archive.month = date.getUTCMonth();
+  }
+  renderArchive(to);
+}
+
 // Closed drop-down menus: Enter (and Space) open the list, as players expect.
 function openMenuOnEnter(e) {
   if ((e.key === "Enter" || e.key === " ") && typeof e.currentTarget.showPicker === "function") {
@@ -417,33 +517,27 @@ function openMenuOnEnter(e) {
   }
 }
 
-function renderHead(puzzle) {
-  // Today and Practice sit at the top; the archive grows underneath in its own group.
-  const archive = [];
-  for (let n = today - 1; n >= 1; n--) {
-    const p = (store.data.progress?.[puzzle.mode] || {})[n];
-    const result = p?.done ? (p.won ? ", solved" : p.revealed ? ", revealed" : ", unsolved") : "";
-    archive.push(h("option", { value: `archive:${n}` }, `#${n}, ${shortDate(dateOfPuzzle(game.config.launch, n))}${result}`));
-  }
-  const options = [
-    h("option", { value: "today" }, `Today's file, #${today}`),
-    h("option", { value: "practice" }, "Practice, random cape"),
-    archive.length ? h("optgroup", { label: "Archive" }, archive) : null,
-  ];
-  const pick = (value) => { state.pick = value; state.error = ""; render(); };
-  const select = h("select", { id: "file-pick", onchange: (e) => pick(e.target.value), onkeydown: openMenuOnEnter }, options);
-  select.value = state.pick;
-  const inPractice = puzzle.kind === "practice";
-  const practiceButton = h("button", {
-    type: "button", id: "practice-toggle", class: "button button-small practice-toggle",
-    onclick: () => pick(inPractice ? "today" : "practice"),
-  }, inPractice ? "Back to today" : "Practice");
+function pickFile(value) {
+  state.pick = value;
+  state.error = "";
+  render();
+}
 
+function renderHead(puzzle) {
+  // Today / Archive / Practice buttons; the archive opens a calendar (see openArchive).
+  const button = (id, label, onclick, extra = {}) =>
+    h("button", { type: "button", id, class: "button button-small", onclick, ...extra }, label);
+  const actions = [
+    puzzle.kind !== "today" ? button("back-today", "Today's file", () => pickFile("today")) : null,
+    today > 1 ? button("archive-open", "Archive", () => openArchive(), { "aria-haspopup": "dialog" }) : null,
+    puzzle.kind !== "practice" ? button("practice-toggle", "Practice", () => pickFile("practice")) : null,
+  ];
   const kids = [
     h("p", { class: "file-title" },
       `${MODES[puzzle.mode].file}, `,
-      puzzle.kind === "practice" ? "practice file" : `file ${String(puzzle.number).padStart(4, "0")}`),
-    h("div", { class: "file-pick" }, h("label", { for: "file-pick" }, "Open"), select, practiceButton),
+      puzzle.kind === "practice" ? "practice file" : `file ${String(puzzle.number).padStart(4, "0")}`,
+      puzzle.kind === "archive" ? h("span", { class: "file-date" }, ` (${shortDate(dateOfPuzzle(game.config.launch, puzzle.number))})`) : null),
+    h("div", { class: "file-actions" }, actions),
   ];
   if (puzzle.kind === "practice") {
     const p = state.practice[puzzle.mode];
