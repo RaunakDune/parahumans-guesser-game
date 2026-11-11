@@ -511,14 +511,15 @@ function renderLineup(puzzle) {
     ? h("div", { class: "lineup-scroll" },
         h("table", { class: "lineup" },
           h("caption", { class: "sr-only" }, "Your guesses compared with the target"),
-          h("thead", {}, h("tr", {}, h("th", { scope: "col" }, "Cape"), game.clues.map((c) => h("th", { scope: "col" }, c.label)))),
+          h("thead", {}, h("tr", {}, h("th", { scope: "col" }, "Cape"), game.clues.map((c) => h("th", { scope: "col" }, headingButton(c))))),
           h("tbody", {}, rows)),
         h("p", { class: "lineup-legend" },
           h("span", { class: "k-match" }, "✓ matches"),
           h("span", { class: "k-near" }, game.clues.some((c) => c.field === "arc")
             ? `≈ close: shares a power class, or within ${game.config.arcClose ?? 2} arcs` : "≈ partly right: shares a power class"),
           game.clues.some((c) => c.field === "arc") ? h("span", { class: "k-arrow" }, "▲ ▼ subject first appears later / earlier") : null,
-          h("span", { class: "k-miss" }, "✗ no match")))
+          h("span", { class: "k-miss" }, "✗ no match"),
+          h("span", { class: "k-arrow k-tip" }, "Tap a heading to see its possible values")))
     : h("p", { class: "ruled-out" }, "Name any cape to put them in the lineup and compare them with the subject.");
   const misses = progress.g.length - (progress.won ? 1 : 0);
   const notes = notesList(LINEUP_HINTS, misses, progress.done, (hint) => hint.value(answer), (hint) => hint.label);
@@ -906,10 +907,11 @@ const DETAIL_INTROS = {
   arc: "the arc where they first appear",
 };
 
-function fillValues() {
+// One sentence explaining a Lineup detail and its possible values (How to play + column headings).
+function detailText(field) {
   const answers = game.capes.filter((c) => c.complete);
-  const rows = [];
-  for (const clue of game.clues) {
+  const clue = game.clues.find((c) => c.field === field) || { field };
+  {
     const intro = DETAIL_INTROS[clue.field];
     let text;
     if (clue.field === "team") {
@@ -923,10 +925,49 @@ function fillValues() {
       const values = [...counts.keys()].sort((a, b) => clue.field === "power" ? a.localeCompare(b) : counts.get(b) - counts.get(a));
       text = values.map((v) => (VALUE_NOTES[clue.field]?.[v] ? `${v} (${VALUE_NOTES[clue.field][v]})` : v)).join(", ");
     }
-    rows.push(h("div", {}, h("dt", {}, clue.label), h("dd", {}, intro ? `${intro[0].toUpperCase()}${intro.slice(1)}: ${text}.` : `${text}.`)));
+    return intro ? `${intro[0].toUpperCase()}${intro.slice(1)}: ${text}.` : `${text}.`;
   }
-  $("#help-values").replaceChildren(...rows);
 }
+
+function fillValues() {
+  $("#help-values").replaceChildren(...game.clues.map((clue) =>
+    h("div", {}, h("dt", {}, clue.label), h("dd", {}, detailText(clue.field)))));
+}
+
+// Lineup column headings are buttons: tapping one shows what that detail means and its values.
+function headingButton(clue) {
+  return h("button", {
+    type: "button", class: "th-info", "aria-expanded": "false", "aria-controls": "detail-pop",
+    onclick: (e) => { e.stopPropagation(); toggleDetail(e.currentTarget, clue); },
+  }, clue.label);
+}
+
+function closeDetail() {
+  const pop = $("#detail-pop");
+  if (!pop) return;
+  document.querySelectorAll(".th-info[aria-expanded=true]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  pop.remove();
+}
+
+function toggleDetail(button, clue) {
+  const wasOpen = button.getAttribute("aria-expanded") === "true";
+  closeDetail();
+  if (wasOpen) return;
+  const sheet = $("#sheet");
+  const pop = h("div", { id: "detail-pop", class: "detail-pop", role: "note" },
+    h("strong", {}, clue.label), " ", detailText(clue.field));
+  sheet.append(pop);
+  button.setAttribute("aria-expanded", "true");
+  const s = sheet.getBoundingClientRect(), b = button.getBoundingClientRect();
+  const width = Math.min(280, s.width - 24);
+  const left = Math.max(12, Math.min(b.left - s.left, s.width - width - 12));
+  pop.style.width = `${width}px`;
+  pop.style.left = `${left}px`;
+  pop.style.top = `${b.bottom - s.top + 6}px`;
+}
+
+document.addEventListener("click", (e) => { if (!e.target.closest?.("#detail-pop")) closeDetail(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDetail(); });
 
 function fillHelp() {
   fillValues();
