@@ -528,7 +528,8 @@ function renderHead(puzzle) {
   const button = (id, label, onclick, extra = {}) =>
     h("button", { type: "button", id, class: "button button-small", onclick, ...extra }, label);
   const actions = [
-    puzzle.kind !== "today" ? button("back-today", "Today's file", () => pickFile("today")) : null,
+    // Away from today's file: a solid button that stands out from Archive / Practice.
+    puzzle.kind !== "today" ? button("back-today", `◂ Today's file #${today}`, () => pickFile("today"), { class: "button button-small button-primary back-today" }) : null,
     today > 1 ? button("archive-open", "Archive", () => openArchive(), { "aria-haspopup": "dialog" }) : null,
     puzzle.kind !== "practice" ? button("practice-toggle", "Practice", () => pickFile("practice")) : null,
   ];

@@ -239,6 +239,8 @@ main {
 }
 .file-title { margin: 0; font-weight: 700; font-size: var(--s0); }
 .file-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.back-today { box-shadow: 0 2px 0 rgba(0, 0, 0, .25); }
+.back-today:hover { color: var(--sodium-soft); }
 .file-date { font-weight: 400; color: var(--ink-soft); }
 .memo-archive { width: min(560px, calc(100vw - 24px)); }
 .archive-summary { margin: 4px 0 12px; color: var(--ink-soft); font-size: var(--s-1); }
