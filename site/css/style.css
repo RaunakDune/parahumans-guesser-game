@@ -96,7 +96,11 @@ body {
 
 a { color: var(--sodium-soft); text-underline-offset: 3px; }
 a:hover { color: var(--sodium); }
-:focus-visible { outline: 3px solid var(--sodium); outline-offset: 2px; }
+:root { --focus-dark: #10100e; --focus-light: #fff6d8; }
+/* Two-tone focus ring: a dark inner band and a light outer band, so the keyboard
+   focus stands out on the manila paper and on the night background alike. */
+:focus-visible { outline: 3px solid var(--focus-dark) !important; outline-offset: 0 !important; box-shadow: 0 0 0 6px var(--focus-light) !important; }
+.tab:focus-visible, .button:focus-visible, .icon-button:focus-visible { position: relative; z-index: 1; }
 button { font: inherit; color: inherit; }
 cite { font-style: italic; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -392,7 +396,7 @@ main {
 .lineup th:first-child { width: 19%; }
 .th-info { all: unset; cursor: pointer; text-decoration: underline dotted; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .th-info:hover, .th-info[aria-expanded=true] { color: var(--ink); }
-.th-info:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
 .detail-pop { position: absolute; z-index: 5; padding: 10px 12px; background: #fbf3dd; color: var(--ink);
   border: 1px solid var(--manila-edge, #b89a5c); border-radius: 3px; box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
   font-size: var(--s-1); line-height: 1.45; }
