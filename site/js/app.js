@@ -391,10 +391,13 @@ function render() {
   const puzzle = currentPuzzle();
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.setAttribute("aria-selected", String(tab.dataset.mode === state.mode));
-    tab.tabIndex = tab.dataset.mode === state.mode ? 0 : -1;
+    tab.tabIndex = 0;   // both tabs are in the Tab order; arrow keys also switch
   });
   sheet.setAttribute("aria-labelledby", `tab-${state.mode}`);
 
+  // Redrawing replaces the controls, so remember which one had keyboard focus and put it back.
+  const focusedId = (sheet.contains(document.activeElement) || after.contains(document.activeElement))
+    ? document.activeElement.id : "";
   const body = { lineup: renderLineup, power: renderPower }[state.mode](puzzle);
   sheet.replaceChildren(...[
     renderHead(puzzle),
@@ -404,6 +407,14 @@ function render() {
   ].filter(Boolean));
   after.replaceChildren(...(puzzle.progress.done ? [renderReport(puzzle)] : []));
   state.fresh = null;
+  if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
+}
+
+// Closed drop-down menus: Enter (and Space) open the list, as players expect.
+function openMenuOnEnter(e) {
+  if ((e.key === "Enter" || e.key === " ") && typeof e.currentTarget.showPicker === "function") {
+    try { e.preventDefault(); e.currentTarget.showPicker(); } catch { /* not allowed here: keep the browser's default */ }
+  }
 }
 
 function renderHead(puzzle) {
@@ -420,11 +431,11 @@ function renderHead(puzzle) {
     archive.length ? h("optgroup", { label: "Archive" }, archive) : null,
   ];
   const pick = (value) => { state.pick = value; state.error = ""; render(); };
-  const select = h("select", { id: "file-pick", onchange: (e) => pick(e.target.value) }, options);
+  const select = h("select", { id: "file-pick", onchange: (e) => pick(e.target.value), onkeydown: openMenuOnEnter }, options);
   select.value = state.pick;
   const inPractice = puzzle.kind === "practice";
   const practiceButton = h("button", {
-    type: "button", class: "button button-small practice-toggle",
+    type: "button", id: "practice-toggle", class: "button button-small practice-toggle",
     onclick: () => pick(inPractice ? "today" : "practice"),
   }, inPractice ? "Back to today" : "Practice");
 
@@ -439,6 +450,7 @@ function renderHead(puzzle) {
     const series = h("select", {
       id: "series-pick",
       onchange: (e) => { p.series = e.target.value; newPractice(); },
+      onkeydown: openMenuOnEnter,
     }, h("option", { value: "any" }, "Every story"),
       PRACTICE_STORIES.filter((s) => poolFor(puzzle.mode).some((c) => c.introduced === s))
         .map((s) => h("option", { value: s }, `${s} only`)));
