@@ -890,7 +890,46 @@ function maybeWelcome() {
   return true;
 }
 
+// How to play: every value each Lineup detail can take, read from the current data so the
+// list stays right as the spreadsheet changes. Unusual values get a short explanation.
+const VALUE_NOTES = {
+  status: { Unknown: "fate never confirmed by the end of Ward" },
+  disposition: { Rogue: "neither hero nor villain", Unknown: "side never made clear", "Non-cape": "no powers; never an answer" },
+  type: { "Case 53": "Cauldron-made capes with altered bodies and lost memories", "Other (Entity/AI)": "Entities, shards and AIs" },
+  team: { "No team": "not on a team at the end" },
+};
+const DETAIL_INTROS = {
+  disposition: "which side they ended up on",
+  status: "where things stand at the end of Ward",
+  team: "the last team they belonged to",
+  power: "their main class; amber if they share any class",
+  arc: "the arc where they first appear",
+};
+
+function fillValues() {
+  const answers = game.capes.filter((c) => c.complete);
+  const rows = [];
+  for (const clue of game.clues) {
+    const intro = DETAIL_INTROS[clue.field];
+    let text;
+    if (clue.field === "team") {
+      const teams = new Set(answers.map((c) => c.team).filter(Boolean));
+      text = `${teams.size} teams, or "No team" (${VALUE_NOTES.team["No team"]})`;
+    } else if (clue.field === "arc") {
+      text = "Worm Arc 1 to 30, PRT Quest, Glow-worm P.1 onwards, Ward Arc 1 onwards (with Eclipse between 7 and 8), then PHO Sunday";
+    } else {
+      const counts = new Map();
+      for (const c of answers) if (c[clue.field]) counts.set(c[clue.field], (counts.get(c[clue.field]) || 0) + 1);
+      const values = [...counts.keys()].sort((a, b) => clue.field === "power" ? a.localeCompare(b) : counts.get(b) - counts.get(a));
+      text = values.map((v) => (VALUE_NOTES[clue.field]?.[v] ? `${v} (${VALUE_NOTES[clue.field][v]})` : v)).join(", ");
+    }
+    rows.push(h("div", {}, h("dt", {}, clue.label), h("dd", {}, intro ? `${intro[0].toUpperCase()}${intro.slice(1)}: ${text}.` : `${text}.`)));
+  }
+  $("#help-values").replaceChildren(...rows);
+}
+
 function fillHelp() {
+  fillValues();
   const ready = game.capes.filter((c) => (c.pool || []).includes("lineup")).length;
   $("#beta-ready").textContent = `${ready}`;
   $("#beta-total").textContent = `${game.capes.length} capes`;

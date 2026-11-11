@@ -513,6 +513,11 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
 .memo h3 { font-family: var(--display); font-weight: 800; font-size: var(--s1); margin: 18px 0 4px; }
 .memo p, .memo li { max-width: 62ch; }
 .memo ul { padding-left: 1.2em; }
+.detail-values { margin: 6px 0 0; display: grid; gap: 6px; }
+.detail-values div { display: grid; grid-template-columns: 7.5em 1fr; gap: 10px; }
+.detail-values dt { font-family: var(--display); font-weight: 800; }
+.detail-values dd { margin: 0; }
+@media (max-width: 560px) { .detail-values div { grid-template-columns: 1fr; gap: 0; } }
 .memo-close { position: absolute; top: 14px; right: 14px; margin: 0; }
 .memo-close button { background: none; border: 1px solid var(--ink); border-radius: 2px; padding: 3px 8px; cursor: pointer; font-size: var(--s-1); }
 .memo-actions { margin: 18px 0 0; }
