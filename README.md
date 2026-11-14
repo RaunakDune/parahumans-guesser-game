@@ -78,6 +78,12 @@ the answer would turn every tile green without solving it. The build finds these
 answer pool (they can still be guessed, and can still be Power file answers), and lists them as warnings at the top
 of the GitHub Actions run. Change one detail in the sheet and they go back into the pool on the next build.
 
+**Weekly difficulty.** Daily answers get harder through the week, by First appearance (players aren't told):
+Sunday to Tuesday draw from Worm Arcs 1–20, Wednesday from Worm Arc 21 to the epilogue, Thursday from Glow-worm
+and Ward Arcs 1–10 (with Eclipse), Friday from Ward Arc 11 to the epilogue, and Saturday from PRT Quest and PHO
+Sunday. If a day's tier has no cape that hasn't been used recently, the nearest tier fills in. `TIERS`,
+`WEEKDAY_TIER` and `difficulty_tier` in `scripts/build_data.py` hold the rules.
+
 To restart the numbering at puzzle #1 (for example, on launch day), delete `data/schedule.json` and push.
 
 To see upcoming answers yourself:

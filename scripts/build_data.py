@@ -573,6 +573,35 @@ def annotate(message: str) -> None:
         print(f"::warning title=Lineup look-alikes::{message}")
 
 
+# ---------------------------------------------------------------- difficulty
+# Daily answers get harder through the week, by where the cape first appears.
+# Players never see the tier; it only steers which cape is drawn for a day.
+TIERS = ["Easiest", "Easy", "Medium", "Hard", "Hardest"]
+# weekday (Monday = 0 ... Sunday = 6) -> tier index
+WEEKDAY_TIER = {6: 0, 0: 0, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4}
+
+
+def difficulty_tier(cape: dict) -> int:
+    """Easiest: Worm Arcs 1-20. Easy: Worm Arc 21 to the epilogue. Medium: Glow-worm and Ward
+    Arcs 1-10 (with Eclipse). Hard: Ward Arc 11 to the epilogue. Hardest: PRT Quest, PHO Sunday."""
+    arc = cape.get("arc") or ""
+    m = re.match(r"(Worm|Ward) Arc (\d+)$", arc)
+    if m:
+        n = int(m.group(2))
+        return (0 if n <= 20 else 1) if m.group(1) == "Worm" else (2 if n <= 10 else 3)
+    if arc == "Worm epilogue":
+        return 1
+    if arc.startswith("Glow-worm") or arc == "Ward Eclipse":
+        return 2
+    if arc == "Ward epilogue":
+        return 3
+    story = cape.get("introduced") or cape.get("series") or ""
+    if story in WHOLE_STORIES:
+        return 4
+    # no arc on file (can happen for Power file answers): place by story
+    return {"Worm": 1, "Glow-worm": 2, "Ward": 3}.get(story, 2)
+
+
 # ---------------------------------------------------------------- schedule
 
 def load_schedule() -> dict:
@@ -582,7 +611,8 @@ def load_schedule() -> dict:
 
 
 def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, warn,
-                  redraw: bool = False, keep_through: dt.date | None = None) -> dict:
+                  redraw: bool = False, keep_through: dt.date | None = None,
+                  tiers: dict[str, int] | None = None) -> dict:
     launch = dt.date.fromisoformat(previous["launch"]) if previous.get("launch") else today
     edition = int(previous.get("edition", 1)) + (1 if redraw and previous else 0)
     today_index = (today - launch).days
@@ -601,12 +631,29 @@ def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, w
             out["modes"][mode] = [encode_id(x) for x in days]
             continue
         recent_window = max(1, min(len(pool) // 2, 120))
+        by_tier = {}
+        for c in pool:
+            by_tier.setdefault(tiers.get(c, 2) if tiers else 0, []).append(c)
         while len(days) <= today_index + HORIZON_DAYS:
             index = len(days)
             seed = int(hashlib.sha256(f"{mode}:{launch}:{index}{salt}".encode()).hexdigest(), 16)
             rng = random.Random(seed)
             recent = set(days[-recent_window:])
-            choices = [c for c in pool if c not in recent] or pool
+            if tiers:
+                # the day's tier, then the nearest tiers, until one has a cape not used recently
+                want = WEEKDAY_TIER[(launch + dt.timedelta(days=index)).weekday()]
+                order = sorted(by_tier, key=lambda t: (abs(t - want), -t if t < want else t))
+                choices = []
+                for t in order:
+                    tier_pool = by_tier[t]
+                    # a small tier can only avoid repeats over its own size: half of it, in days of that tier
+                    tier_recent = set(days[-max(7, 7 * (len(tier_pool) // 2)):]) if len(tier_pool) < recent_window else recent
+                    choices = [c for c in tier_pool if c not in tier_recent]
+                    if choices:
+                        break
+                choices = choices or by_tier.get(want) or pool
+            else:
+                choices = [c for c in pool if c not in recent] or pool
             days.append(rng.choice(choices))
         out["modes"][mode] = [encode_id(x) for x in days]
     return out
@@ -663,7 +710,9 @@ def build(workbook: Path, now_utc: dt.datetime, write: bool = True, quiet: bool 
         "power": [c["id"] for c in capes if c["powerEligible"]],
     }
     known_ids = {c["id"] for c in capes}
-    schedule = draw_schedule(load_schedule(), pools, today, warn, redraw=redraw, keep_through=keep_through)
+    tiers = {c["id"]: difficulty_tier(c) for c in capes}
+    schedule = draw_schedule(load_schedule(), pools, today, warn, redraw=redraw, keep_through=keep_through,
+                             tiers=tiers)
     launch = dt.date.fromisoformat(schedule["launch"])
     names = {c["id"]: c["name"] for c in capes}
     frozen = (today - launch).days + FREEZE_DAYS_AHEAD + 1

@@ -199,6 +199,22 @@ class Schedule(unittest.TestCase):
             self.assertEqual(first["modes"][m][:4], again["modes"][m][:4])
             self.assertNotEqual(first["modes"][m][4:14], again["modes"][m][4:14])
 
+    def test_difficulty_tiers(self):
+        T = lambda arc, story="": bd.difficulty_tier({"arc": arc, "introduced": story})
+        self.assertEqual([T("Worm Arc 1"), T("Worm Arc 20"), T("Worm Arc 21"), T("Worm epilogue")], [0, 0, 1, 1])
+        self.assertEqual([T("Glow-worm P.3"), T("Ward Arc 10"), T("Ward Eclipse"), T("Ward Arc 11"), T("Ward epilogue")],
+                         [2, 2, 2, 3, 3])
+        self.assertEqual([T("PRT Quest", "PRT Quest"), T("PHO Sunday", "PHO Sunday")], [4, 4])
+
+    def test_days_follow_the_weekly_ramp(self):
+        launch = dt.date(2026, 10, 18)                      # a Sunday
+        pools = {m: [f"t{t}-{i}" for t in range(5) for i in range(12)] for m in bd.MODES}
+        tiers = {c: int(c[1]) for c in pools["lineup"]}
+        s = bd.draw_schedule({}, pools, launch, lambda w: None, tiers=tiers)
+        for i, token in enumerate(s["modes"]["lineup"][:70]):
+            day = launch + dt.timedelta(days=i)
+            self.assertEqual(tiers[bd.decode_id(token)], bd.WEEKDAY_TIER[day.weekday()], day)
+
     def test_no_quick_repeats(self):
         pools = {m: [f"cape-{i}" for i in range(30)] for m in bd.MODES}
         s = bd.draw_schedule({}, pools, dt.date(2026, 1, 1), lambda w: None)
