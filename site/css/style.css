@@ -557,6 +557,31 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
 .memo h3 { font-family: var(--display); font-weight: 800; font-size: var(--s1); margin: 18px 0 4px; }
 .memo p, .memo li { max-width: 62ch; }
 .memo ul { padding-left: 1.2em; }
+.memo-help .help-intro { margin: 2px 0 12px; }
+.help-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--ink); margin-bottom: 14px; }
+.help-tabs [role=tab] { font: inherit; font-family: var(--display); font-weight: 800; font-size: var(--s0); color: var(--ink-soft);
+  background: var(--manila-light); border: 1px solid var(--manila-edge); border-bottom: none; border-radius: 3px 3px 0 0;
+  padding: 5px 10px 4px; cursor: pointer; margin-bottom: -2px; }
+.help-tabs [role=tab][aria-selected=true] { color: var(--ink); background: var(--manila); border-color: var(--ink); border-bottom: 2px solid var(--manila); }
+.help-page { min-height: 12.5em; }
+.help-page h3 { margin-top: 0; }
+.help-page:focus-visible { outline-offset: 4px !important; }
+.help-keys { list-style: none; padding-left: 0 !important; display: grid; gap: 8px; }
+.help-keys li { display: grid; grid-template-columns: 2.4em 1fr; gap: 8px; align-items: start; }
+.key { display: inline-flex; align-items: center; justify-content: center; min-height: 1.7em; border-radius: 2px; color: #fff; font-weight: 700; }
+.key-match { background: var(--match); } .key-near { background: var(--near); } .key-miss { background: var(--miss); }
+.key-arrow { background: var(--ink); font-size: .8em; }
+.help-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--manila-edge); }
+.help-nav .button:disabled { opacity: .35; cursor: default; }
+.help-count { font-size: var(--s-1); color: var(--ink-soft); }
+.help-page .detail-values { font-size: var(--s-1); line-height: 1.45; }
+.memo-help h2 { margin-bottom: 10px; }
+@media (max-width: 560px) {
+  .help-tabs { gap: 2px; }
+  .help-tabs [role=tab] { font-size: .82rem; padding: 4px 6px 3px; }
+  .memo-help .help-page, .memo-help .help-keys { font-size: var(--s-1); line-height: 1.45; }
+  .help-page { min-height: 0; }
+}
 .detail-values { margin: 6px 0 0; display: grid; gap: 6px; }
 .detail-values div { display: grid; grid-template-columns: 7.5em 1fr; gap: 10px; }
 .detail-values dt { font-family: var(--display); font-weight: 800; }

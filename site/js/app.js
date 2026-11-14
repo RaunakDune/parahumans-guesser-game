@@ -410,6 +410,48 @@ function render() {
   if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
 }
 
+// ---------------------------------------------------------------- How to play pages
+// Short pages with a tab strip (Tab or arrow keys between tabs) and Back / Next buttons.
+
+const HELP_PAGES = 6;
+let helpPage = 1;
+
+function showHelpPage(n, focusTab = false) {
+  helpPage = Math.min(HELP_PAGES, Math.max(1, n));
+  for (let i = 1; i <= HELP_PAGES; i++) {
+    const tab = $(`#help-tab-${i}`), page = $(`#help-page-${i}`);
+    tab.setAttribute("aria-selected", String(i === helpPage));
+    page.hidden = i !== helpPage;
+  }
+  $("#help-count").textContent = `Page ${helpPage} of ${HELP_PAGES}`;
+  $("#help-prev").disabled = helpPage === 1;
+  $("#help-next").textContent = helpPage === HELP_PAGES ? "Done" : "Next ▸";
+  $("#help-page-" + helpPage).scrollTop = 0;
+  $("#dialog-help").scrollTop = 0;
+  if (focusTab) $(`#help-tab-${helpPage}`).focus();
+}
+
+function setupHelpPages() {
+  for (let i = 1; i <= HELP_PAGES; i++) {
+    const tab = $(`#help-tab-${i}`);
+    tab.addEventListener("click", () => showHelpPage(i));
+    tab.addEventListener("keydown", (e) => {
+      const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 1, End: HELP_PAGES }[e.key];
+      if (!to) return;
+      e.preventDefault();
+      showHelpPage(((to - 1 + HELP_PAGES) % HELP_PAGES) + 1, true);
+    });
+  }
+  $("#help-prev").addEventListener("click", () => {
+    showHelpPage(helpPage - 1);
+    if ($("#help-prev").disabled) $("#help-next").focus();
+  });
+  $("#help-next").addEventListener("click", () => {
+    if (helpPage === HELP_PAGES) { $("#dialog-help").close(); return; }
+    showHelpPage(helpPage + 1);
+  });
+}
+
 // ---------------------------------------------------------------- archive calendar
 // A month-by-month calendar of daily files for the current mode, coloured by the
 // player's result. Weeks start on Monday. Arrow keys move between days.
@@ -930,8 +972,10 @@ function wireChrome() {
   document.querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => {
     const which = btn.dataset.open;
     if (which === "stats") renderStats(state.mode);
+    if (which === "help") showHelpPage(1);
     openDialog($(`#dialog-${which}`));
   }));
+  setupHelpPages();
   window.addEventListener("hashchange", () => {
     const mode = location.hash.replace("#", "");
     if (MODES[mode] && mode !== state.mode) switchMode(mode);
@@ -1037,8 +1081,10 @@ function detailText(field) {
 }
 
 function fillValues() {
-  $("#help-values").replaceChildren(...game.clues.map((clue) =>
-    h("div", {}, h("dt", {}, clue.label), h("dd", {}, detailText(clue.field)))));
+  // How to play shows these over two short pages: the first four details, then the rest.
+  const row = (clue) => h("div", {}, h("dt", {}, clue.label), h("dd", {}, detailText(clue.field)));
+  $("#help-values").replaceChildren(...game.clues.slice(0, 4).map(row));
+  $("#help-values-2").replaceChildren(...game.clues.slice(4).map(row));
 }
 
 // Lineup column headings are buttons: tapping one shows what that detail means and its values.
