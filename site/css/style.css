@@ -563,6 +563,17 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
   background: var(--manila-light); border: 1px solid var(--manila-edge); border-bottom: none; border-radius: 3px 3px 0 0;
   padding: 5px 10px 4px; cursor: pointer; margin-bottom: -2px; }
 .help-tabs [role=tab][aria-selected=true] { color: var(--ink); background: var(--manila); border-color: var(--ink); border-bottom: 2px solid var(--manila); }
+/* Lineup and Power file are the main folder tabs, like the game's own; the rest are smaller index tabs. */
+.help-tabs { align-items: flex-end; }
+.help-tabs .help-tab-main { font-size: var(--s1); padding: 8px 14px 6px; color: var(--ink); background: var(--manila-deep);
+  border: 0; border-bottom: 2px solid transparent; border-radius: 6px 6px 0 0; box-shadow: inset 0 -6px 8px -6px rgba(0, 0, 0, .35); }
+.help-tabs .help-tab-main[aria-selected=true] { background: var(--manila); box-shadow: 0 -1px 0 var(--ink), 1px 0 0 var(--ink), -1px 0 0 var(--ink);
+  border-bottom: 2px solid var(--manila); }
+.help-tabs .help-tab-sub { font-size: .85em; padding: 4px 9px 3px; color: var(--ink-soft); font-weight: 600;
+  background: color-mix(in srgb, var(--manila-light) 70%, var(--manila)); border: 1px dashed var(--manila-edge); border-bottom: 2px solid transparent; }
+.help-tabs .help-tab-sub:hover { color: var(--ink); }
+.help-tabs .help-tab-sub[aria-selected=true] { color: var(--ink); font-weight: 800; background: var(--manila); border: 1px solid var(--ink);
+  border-bottom: 2px solid var(--manila); }
 /* All pages share one grid cell, so the box is always as tall as the longest page and the
    Back / Next row never moves. Pages not on show are invisible (and hidden from screen readers). */
 .help-pages { display: grid; }
@@ -588,7 +599,13 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
 @media (max-width: 560px) {
   .help-tabs { gap: 2px; }
   .help-tabs [role=tab] { font-size: .82rem; padding: 4px 6px 3px; }
+  .help-tabs .help-tab-main { font-size: .98rem; padding: 6px 8px 4px; }
+  .help-tabs .help-tab-sub { font-size: .74rem; padding: 3px 5px 2px; }
   .memo-help .help-page, .memo-help .help-keys { font-size: var(--s-1); line-height: 1.45; }
+}
+@media (max-width: 380px) {
+  .help-tabs .help-tab-main { font-size: .9rem; padding: 6px 6px 4px; }
+  .help-tabs .help-tab-sub { font-size: .7rem; padding: 3px 4px 2px; }
 }
 .detail-values { margin: 6px 0 0; display: grid; gap: 6px; }
 .detail-values div { display: grid; grid-template-columns: 7.5em 1fr; gap: 10px; }
