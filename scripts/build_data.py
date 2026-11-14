@@ -646,8 +646,10 @@ def draw_schedule(previous: dict, pools: dict[str, list[str]], today: dt.date, w
                 choices = []
                 for t in order:
                     tier_pool = by_tier[t]
-                    # a small tier can only avoid repeats over its own size: half of it, in days of that tier
-                    tier_recent = set(days[-max(7, 7 * (len(tier_pool) // 2)):]) if len(tier_pool) < recent_window else recent
+                    # no repeat within the tier's last (half its size, at most 120) uses
+                    members = set(tier_pool)
+                    used = [c for c in days if c in members]
+                    tier_recent = set(used[-max(1, min(len(tier_pool) // 2, 120)):])
                     choices = [c for c in tier_pool if c not in tier_recent]
                     if choices:
                         break
