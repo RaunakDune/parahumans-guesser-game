@@ -563,7 +563,14 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
   background: var(--manila-light); border: 1px solid var(--manila-edge); border-bottom: none; border-radius: 3px 3px 0 0;
   padding: 5px 10px 4px; cursor: pointer; margin-bottom: -2px; }
 .help-tabs [role=tab][aria-selected=true] { color: var(--ink); background: var(--manila); border-color: var(--ink); border-bottom: 2px solid var(--manila); }
-.help-page { min-height: 12.5em; }
+/* All pages share one grid cell, so the box is always as tall as the longest page and the
+   Back / Next row never moves. Pages not on show are invisible (and hidden from screen readers). */
+.help-pages { display: grid; }
+.help-page { grid-area: 1 / 1; }
+.help-page[hidden] { display: block; visibility: hidden; }
+/* On short screens the page text scrolls inside the box, so Back / Next stay in view. */
+.memo-help[open] { display: flex; flex-direction: column; max-height: calc(100dvh - max(16px, 8vh) - 12px); }
+.help-pages { min-height: 0; overflow-y: auto; }
 .help-page h3 { margin-top: 0; }
 .help-page:focus-visible { outline-offset: 4px !important; }
 .help-keys { list-style: none; padding-left: 0 !important; display: grid; gap: 8px; }
@@ -582,7 +589,6 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
   .help-tabs { gap: 2px; }
   .help-tabs [role=tab] { font-size: .82rem; padding: 4px 6px 3px; }
   .memo-help .help-page, .memo-help .help-keys { font-size: var(--s-1); line-height: 1.45; }
-  .help-page { min-height: 0; }
 }
 .detail-values { margin: 6px 0 0; display: grid; gap: 6px; }
 .detail-values div { display: grid; grid-template-columns: 7.5em 1fr; gap: 10px; }
