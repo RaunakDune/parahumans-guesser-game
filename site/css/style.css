@@ -574,8 +574,10 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
 .help-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--manila-edge); }
 .help-nav .button:disabled { opacity: .35; cursor: default; }
 .help-count { font-size: var(--s-1); color: var(--ink-soft); }
-.help-page .detail-values { font-size: var(--s-1); line-height: 1.45; }
 .memo-help h2 { margin-bottom: 10px; }
+/* Pin the top edge so the box doesn't jump when pages of different length are shown. */
+.memo-help { margin-top: max(16px, 8vh); margin-bottom: auto; }
+.memo-help .detail-values, .memo-help .detail-values dt, .memo-help .detail-values dd { font-size: inherit; line-height: inherit; }
 @media (max-width: 560px) {
   .help-tabs { gap: 2px; }
   .help-tabs [role=tab] { font-size: .82rem; padding: 4px 6px 3px; }
