@@ -524,6 +524,8 @@ function renderArchive(focusNumber) {
     }, h("span", { class: "day-num" }, d), h("span", { class: "day-file" }, `#${n}`),
       h("span", { class: "day-mark", "aria-hidden": "true" }, RESULT_MARK[result])));
   }
+  // always six week rows, so every month makes the box the same size
+  while (cells.length < 42) cells.push(h("span", { class: "day day-blank", "aria-hidden": "true" }));
   const grid = h("div", { class: "archive-grid", id: "archive-grid", role: "group", "aria-label": label, onkeydown: archiveKeys },
     ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => h("span", { class: "weekday", "aria-hidden": "true" }, w)), cells);
   $("#archive-body").replaceChildren(
