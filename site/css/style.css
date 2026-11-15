@@ -256,7 +256,7 @@ button.day:hover { filter: brightness(1.05); transform: translateY(-1px); }
 .day-num { font-family: var(--display); font-weight: 800; font-size: var(--s1); line-height: 1; }
 .day-file { font-size: .68rem; opacity: .8; line-height: 1; }
 .day-mark { position: absolute; top: 3px; right: 5px; font-size: .78rem; font-weight: 700; line-height: 1; }
-.day-off { opacity: .35; border: 1px dashed var(--manila-edge); }
+.day-off { color: var(--ink-soft); border: 1px dashed var(--manila-edge); }
 .day-off .day-num { font-weight: 500; }
 .day-blank { visibility: hidden; }
 button.day-solved { background: var(--match); border-color: var(--match); color: #fff; }
@@ -426,7 +426,7 @@ button.day-started { border: 2px solid var(--near); }
 .lineup { width: 100%; min-width: 43rem; border-collapse: collapse; margin: 12px 0 0; font-size: var(--s-1); table-layout: fixed; }
 .lineup th { text-align: left; font-family: var(--display); font-weight: 500; font-size: var(--s0); line-height: 1.05; color: var(--ink-soft); padding: 0 4px 6px; vertical-align: bottom; }
 .lineup th:first-child { width: 19%; }
-.th-info { all: unset; cursor: pointer; text-decoration: underline dotted; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.th-info { all: unset; display: inline-block; padding: 4px 0; min-block-size: 24px; box-sizing: border-box; cursor: pointer; text-decoration: underline dotted; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .th-info:hover, .th-info[aria-expanded=true] { color: var(--ink); }
 
 .detail-pop { position: absolute; z-index: 5; padding: 10px 12px; background: #fbf3dd; color: var(--ink);
@@ -552,7 +552,9 @@ dialog.memo {
   color: var(--ink);
   box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
 }
-dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
+dialog.memo::backdrop { background: rgba(3, 7, 11, .72); overflow: hidden; overscroll-behavior: contain; }
+/* scrolling inside a window (or over its backdrop) must not scroll the page behind it */
+dialog.memo:modal { overscroll-behavior: contain; }
 .memo h2 { font-family: var(--display); font-weight: 800; font-size: var(--s3); line-height: 1; margin: 0 0 12px; padding-right: 64px; }
 .memo h3 { font-family: var(--display); font-weight: 800; font-size: var(--s1); margin: 18px 0 4px; }
 .memo p, .memo li { max-width: 62ch; }
@@ -660,9 +662,19 @@ dialog.memo::backdrop { background: rgba(3, 7, 11, .72); }
 @media (prefers-reduced-motion: reduce) {
   .reveal-text.is-fresh::after { animation: none; display: none; }
   .stamp.is-fresh { animation: none; }
+  button.day:hover { transform: none; }
+}
+@media (pointer: coarse) {
+  .th-info { padding: 8px 0; }
 }
 
 @media (forced-colors: active) {
   .redaction { background: CanvasText; forced-color-adjust: none; }
   .tile { border: 2px solid CanvasText; }
+  /* shadows and fills vanish in high-contrast mode: show tab and calendar states with borders */
+  .help-tabs .help-tab-main { border: 1px solid CanvasText; }
+  .help-tabs [role=tab][aria-selected=true], .tab[aria-selected="true"] { border: 3px solid Highlight; }
+  .day-today { outline: 3px solid CanvasText; outline-offset: -5px; }
+  .day[aria-current=true] { text-decoration: underline 3px; }
+  .day[aria-current=true]::after { display: none; }
 }

@@ -66,7 +66,7 @@
 
 <div class="sr-only" id="announcer" aria-live="polite"></div>
 
-<dialog id="dialog-help" class="memo memo-help" aria-labelledby="help-title">
+<dialog id="dialog-help" class="memo memo-help" closedby="any" aria-labelledby="help-title">
   <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
   <h2 id="help-title">How to play</h2>
   <div class="help-tabs" role="tablist" aria-label="How to play pages">
@@ -132,11 +132,11 @@
   <div class="help-nav">
     <button type="button" class="button button-small" id="help-prev">◂ Back</button>
     <span class="help-count" id="help-count" aria-live="polite">Page 1 of 6</span>
-    <button type="button" class="button button-small button-primary" id="help-next">Next ▸</button>
+    <button type="button" class="button button-small button-primary" id="help-next" autofocus>Next ▸</button>
   </div>
 </dialog>
 
-<dialog id="dialog-archive" class="memo memo-archive" aria-labelledby="archive-title">
+<dialog id="dialog-archive" class="memo memo-archive" closedby="any" aria-labelledby="archive-title">
   <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
   <h2 id="archive-title">Archive</h2>
   <p id="archive-summary" class="archive-summary"></p>
@@ -147,13 +147,13 @@
   </p>
 </dialog>
 
-<dialog id="dialog-stats" class="memo" aria-labelledby="stats-title">
+<dialog id="dialog-stats" class="memo" closedby="any" aria-labelledby="stats-title">
   <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
   <h2 id="stats-title">Your record</h2>
   <div id="stats-body"></div>
 </dialog>
 
-<dialog id="dialog-news" class="memo" aria-labelledby="news-title">
+<dialog id="dialog-news" class="memo" closedby="any" aria-labelledby="news-title">
   <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
   <h2 id="news-title">New in the Lineup</h2>
   <p>Some capes were too hard to tell apart, so the Lineup has a seventh detail.</p>
@@ -169,7 +169,7 @@
     <li>Truly stuck? After 8 guesses, you can <strong>reveal the answer</strong>. The file counts as unsolved.</li>
   </ul>
   <form method="dialog" class="memo-actions">
-    <button value="ok" class="button button-primary">Back to the lineup</button>
+    <button value="ok" class="button button-primary" autofocus>Back to the lineup</button>
   </form>
 </dialog>
 
@@ -180,7 +180,7 @@
      and your stats start fresh.</p>
   <p>New files now arrive at midnight in your own time zone.</p>
   <form method="dialog" class="memo-actions">
-    <button value="ok" class="button button-primary">Understood</button>
+    <button value="ok" class="button button-primary" autofocus>Understood</button>
   </form>
 </dialog>
 
@@ -200,7 +200,7 @@
        come back later.</p>
   </section>
   <form method="dialog" class="memo-actions">
-    <button value="ok" class="button button-primary" id="welcome-ok">Got it, let me play</button>
+    <button value="ok" class="button button-primary" id="welcome-ok" autofocus>Got it, let me play</button>
   </form>
 </dialog>
 </body>

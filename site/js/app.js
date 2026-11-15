@@ -999,8 +999,18 @@ function newPractice() {
 }
 
 function openDialog(dialog) {
-  if (typeof dialog.showModal === "function") dialog.showModal();
-  else dialog.setAttribute("open", "");
+  dialog.showModal();
+}
+
+// closedby="any" lets a click outside close the information windows. Safari doesn't support it
+// yet, so there a press and release both outside the box close it (Esc works everywhere).
+if (!("closedBy" in HTMLDialogElement.prototype)) {
+  const outside = (e, d) => { const r = d.getBoundingClientRect(); return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom; };
+  for (const dialog of document.querySelectorAll('dialog[closedby="any"]')) {
+    let pressedOutside = false;
+    dialog.addEventListener("pointerdown", (e) => { pressedOutside = outside(e, dialog); });
+    dialog.addEventListener("pointerup", (e) => { if (pressedOutside && outside(e, dialog)) dialog.close(); });
+  }
 }
 
 // First visit: one pop-up with the beta notice and, if not yet accepted, the spoiler warning.
