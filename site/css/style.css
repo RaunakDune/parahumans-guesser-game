@@ -594,6 +594,18 @@ dialog.memo:modal { overscroll-behavior: contain; }
 .help-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--manila-edge); }
 .help-nav .button:disabled { opacity: .35; cursor: default; }
 .help-count { font-size: var(--s-1); color: var(--ink-soft); }
+/* Cape database tables */
+.db-figures { display: grid; gap: 6px; margin: 0 0 12px; }
+.db-figures div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px dashed var(--manila-edge); }
+.db-figures dt { color: var(--ink-soft); }
+.db-figures dd { margin: 0; font-family: var(--display); font-weight: 800; font-size: var(--s1); }
+.db-table-wrap { overflow-x: auto; margin: 0 0 12px; }
+.db-table { width: 100%; border-collapse: collapse; font-size: var(--s-1); font-variant-numeric: tabular-nums; }
+.db-table th, .db-table td { padding: 4px 8px; border-bottom: 1px dashed var(--manila-edge); text-align: right; white-space: nowrap; }
+.db-table th:first-child { text-align: left; white-space: normal; }
+.db-table thead th { font-family: var(--display); font-weight: 800; color: var(--ink); border-bottom: 2px solid var(--ink); }
+.db-table tbody th { font-weight: 400; }
+.db-note { font-size: var(--s-1); color: var(--ink-soft); margin: 4px 0 0; }
 .memo-help h2 { margin-bottom: 10px; }
 /* Pin the top edge so the box doesn't jump when pages of different length are shown. */
 .memo-help { margin-top: max(16px, 8vh); margin-bottom: auto; }

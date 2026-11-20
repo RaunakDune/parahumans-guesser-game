@@ -410,46 +410,95 @@ function render() {
   if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
 }
 
-// ---------------------------------------------------------------- How to play pages
-// Short pages with a tab strip (Tab or arrow keys between tabs) and Back / Next buttons.
+// ---------------------------------------------------------------- paged windows
+// How to play and the Cape database are short pages with a tab strip (Tab, arrow keys, Home
+// and End move between tabs) and Back / Next buttons. Ids: #<name>-tab-N, #<name>-page-N,
+// #<name>-prev, #<name>-next, #<name>-count, #dialog-<name>.
 
-const HELP_PAGES = 6;
-let helpPage = 1;
+const PAGERS = { help: { pages: 6, page: 1 }, db: { pages: 4, page: 1 } };
 
-function showHelpPage(n, focusTab = false) {
-  helpPage = Math.min(HELP_PAGES, Math.max(1, n));
-  for (let i = 1; i <= HELP_PAGES; i++) {
-    const tab = $(`#help-tab-${i}`), page = $(`#help-page-${i}`);
-    tab.setAttribute("aria-selected", String(i === helpPage));
-    page.hidden = i !== helpPage;
+function showPage(name, n, focusTab = false) {
+  const pager = PAGERS[name];
+  pager.page = Math.min(pager.pages, Math.max(1, n));
+  for (let i = 1; i <= pager.pages; i++) {
+    $(`#${name}-tab-${i}`).setAttribute("aria-selected", String(i === pager.page));
+    $(`#${name}-page-${i}`).hidden = i !== pager.page;
   }
-  $("#help-count").textContent = `Page ${helpPage} of ${HELP_PAGES}`;
-  $("#help-prev").disabled = helpPage === 1;
-  $("#help-next").textContent = helpPage === HELP_PAGES ? "Done" : "Next ▸";
-  $("#help-page-" + helpPage).scrollTop = 0;
-  $("#dialog-help").scrollTop = 0;
-  if (focusTab) $(`#help-tab-${helpPage}`).focus();
+  $(`#${name}-count`).textContent = `Page ${pager.page} of ${pager.pages}`;
+  $(`#${name}-prev`).disabled = pager.page === 1;
+  $(`#${name}-next`).textContent = pager.page === pager.pages ? "Done" : "Next ▸";
+  $(`#dialog-${name}`).scrollTop = 0;
+  if (focusTab) $(`#${name}-tab-${pager.page}`).focus();
 }
+const showHelpPage = (n, focusTab) => showPage("help", n, focusTab);
 
-function setupHelpPages() {
-  for (let i = 1; i <= HELP_PAGES; i++) {
-    const tab = $(`#help-tab-${i}`);
-    tab.addEventListener("click", () => showHelpPage(i));
+function setupPager(name) {
+  const pager = PAGERS[name];
+  for (let i = 1; i <= pager.pages; i++) {
+    const tab = $(`#${name}-tab-${i}`);
+    tab.addEventListener("click", () => showPage(name, i));
     tab.addEventListener("keydown", (e) => {
-      const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 1, End: HELP_PAGES }[e.key];
+      const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 1, End: pager.pages }[e.key];
       if (!to) return;
       e.preventDefault();
-      showHelpPage(((to - 1 + HELP_PAGES) % HELP_PAGES) + 1, true);
+      showPage(name, ((to - 1 + pager.pages) % pager.pages) + 1, true);
     });
   }
-  $("#help-prev").addEventListener("click", () => {
-    showHelpPage(helpPage - 1);
-    if ($("#help-prev").disabled) $("#help-next").focus();
+  $(`#${name}-prev`).addEventListener("click", () => {
+    showPage(name, pager.page - 1);
+    if ($(`#${name}-prev`).disabled) $(`#${name}-next`).focus();
   });
-  $("#help-next").addEventListener("click", () => {
-    if (helpPage === HELP_PAGES) { $("#dialog-help").close(); return; }
-    showHelpPage(helpPage + 1);
+  $(`#${name}-next`).addEventListener("click", () => {
+    if (pager.page === pager.pages) { $(`#dialog-${name}`).close(); return; }
+    showPage(name, pager.page + 1);
   });
+}
+function setupHelpPages() { setupPager("help"); setupPager("db"); }
+
+// ---------------------------------------------------------------- cape database
+// Counts built from the live data, so they follow every spreadsheet update.
+
+const STORY_ORDER = ["Worm", "PRT Quest", "Glow-worm", "Ward", "PHO Sunday"];
+
+function countTable(caption, rows, note) {
+  const head = h("tr", {}, h("th", { scope: "col" }, caption), ["Lineup", "Power file", "All capes"].map((c) => h("th", { scope: "col" }, c)));
+  const body = rows.map(([label, a, b, c]) => h("tr", {}, h("th", { scope: "row" }, label), [a, b, c].map((n) => h("td", {}, n.toLocaleString()))));
+  const parts = [h("div", { class: "db-table-wrap" }, h("table", { class: "db-table" }, h("thead", {}, head), h("tbody", {}, body)))];
+  if (note) parts.push(h("p", { class: "db-note" }, note));
+  return parts;
+}
+
+function breakdown(field, { order, label = (v) => v } = {}) {
+  const lineup = poolFor("lineup"), power = poolFor("power"), all = game.capes;
+  const keyOf = (c) => (field === "introduced" ? c.introduced : c[field]) || "Not on file";
+  const values = new Set(all.map(keyOf));
+  const ranked = [...values].sort((a, b) => {
+    if (a === "Not on file") return 1;
+    if (b === "Not on file") return -1;
+    if (order) return (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99);
+    return all.filter((c) => keyOf(c) === b).length - all.filter((c) => keyOf(c) === a).length || a.localeCompare(b);
+  });
+  const n = (list, v) => list.filter((c) => keyOf(c) === v).length;
+  return ranked.map((v) => [label(v), n(lineup, v), n(power, v), n(all, v)]);
+}
+
+function fillDatabase() {
+  const lineup = poolFor("lineup"), power = poolFor("power");
+  const complete = game.capes.filter((c) => c.complete).length;
+  const updated = new Date(game.generated).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  $("#db-page-1").replaceChildren(
+    h("h3", {}, "Answer pools"),
+    h("dl", { class: "db-figures" },
+      [["Capes on record", game.capes.length], ["Complete files", complete],
+       ["Can be a Lineup answer", lineup.length], ["Can be a Power file answer", power.length], ["Daily files so far", today]]
+        .map(([k, v]) => h("div", {}, h("dt", {}, k), h("dd", {}, v.toLocaleString())))),
+    h("p", { class: "db-note" }, `Updated ${updated}. Capes with unfinished files can be guessed but aren't picked as answers.`));
+  $("#db-page-2").replaceChildren(h("h3", {}, "Stories"),
+    ...countTable("Introduced in", breakdown("introduced", { order: STORY_ORDER })));
+  $("#db-page-3").replaceChildren(h("h3", {}, "Gender & side"),
+    ...countTable("Gender", breakdown("gender")), ...countTable("Disposition", breakdown("disposition")));
+  $("#db-page-4").replaceChildren(h("h3", {}, "Power classes"),
+    ...countTable("Main class", breakdown("power"), "Counts each cape's main class only."));
 }
 
 // ---------------------------------------------------------------- archive calendar
@@ -975,6 +1024,7 @@ function wireChrome() {
     const which = btn.dataset.open;
     if (which === "stats") renderStats(state.mode);
     if (which === "help") showHelpPage(1);
+    if (which === "db") { fillDatabase(); showPage("db", 1); }
     openDialog($(`#dialog-${which}`));
   }));
   setupHelpPages();

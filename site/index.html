@@ -38,6 +38,7 @@
   <nav class="masthead-actions" aria-label="Game menu">
     <button type="button" class="icon-button" data-open="help">How to play</button>
     <button type="button" class="icon-button" data-open="stats">Stats</button>
+    <button type="button" class="icon-button" data-open="db">Cape database</button>
   </nav>
 </header>
 
@@ -71,11 +72,11 @@
   <h2 id="help-title">How to play</h2>
   <div class="help-tabs" role="tablist" aria-label="How to play pages">
     <button type="button" role="tab" class="help-tab-main" id="help-tab-1" aria-controls="help-page-1">Lineup</button>
-    <button type="button" role="tab" class="help-tab-sub" id="help-tab-2" aria-controls="help-page-2">Hints</button>
+    <button type="button" role="tab" class="help-tab-sub" id="help-tab-2" aria-controls="help-page-2">Lineup hints</button>
     <button type="button" role="tab" class="help-tab-main" id="help-tab-3" aria-controls="help-page-3">Power file</button>
-    <button type="button" role="tab" class="help-tab-sub" id="help-tab-4" aria-controls="help-page-4">Details</button>
-    <button type="button" role="tab" class="help-tab-sub" id="help-tab-5" aria-controls="help-page-5">More</button>
-    <button type="button" role="tab" class="help-tab-sub" id="help-tab-6" aria-controls="help-page-6">Rules</button>
+    <button type="button" role="tab" class="help-tab-sub" id="help-tab-4" aria-controls="help-page-4">Who they are</button>
+    <button type="button" role="tab" class="help-tab-sub" id="help-tab-5" aria-controls="help-page-5">Teams, powers &amp; arcs</button>
+    <button type="button" role="tab" class="help-tab-sub" id="help-tab-6" aria-controls="help-page-6">Names &amp; daily files</button>
   </div>
 
   <div class="help-pages">
@@ -108,17 +109,17 @@
   </section>
 
   <section class="help-page" role="tabpanel" id="help-page-4" aria-labelledby="help-tab-4" tabindex="0" hidden>
-    <h3>What the details mean</h3>
+    <h3>Who they are</h3>
     <dl class="detail-values" id="help-values"></dl>
   </section>
 
   <section class="help-page" role="tabpanel" id="help-page-5" aria-labelledby="help-tab-5" tabindex="0" hidden>
-    <h3>More details</h3>
+    <h3>Teams, powers &amp; arcs</h3>
     <dl class="detail-values" id="help-values-2"></dl>
   </section>
 
   <section class="help-page" role="tabpanel" id="help-page-6" aria-labelledby="help-tab-6" tabindex="0" hidden>
-    <h3>A few rules</h3>
+    <h3>Names &amp; daily files</h3>
     <ul>
       <li>Names, cape names and civilian names all count. Skitter, Weaver and Taylor Hebert are the same answer.</li>
       <li>New files arrive at <span id="help-reset">midnight CET</span>. Missed one? Open it from the Archive. Want more? Press Practice for a random cape; practice files don't count in your stats.</li>
@@ -145,6 +146,28 @@
     <span class="k k-solved">✓ solved</span> <span class="k k-revealed">⚑ revealed</span>
     <span class="k k-unsolved">✗ unsolved</span> <span class="k k-started">… in progress</span>
   </p>
+</dialog>
+
+<dialog id="dialog-db" class="memo memo-help memo-db" closedby="any" aria-labelledby="db-title">
+  <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
+  <h2 id="db-title">Cape database</h2>
+  <div class="help-tabs" role="tablist" aria-label="Cape database pages">
+    <button type="button" role="tab" class="help-tab-sub" id="db-tab-1" aria-controls="db-page-1">Answer pools</button>
+    <button type="button" role="tab" class="help-tab-sub" id="db-tab-2" aria-controls="db-page-2">Stories</button>
+    <button type="button" role="tab" class="help-tab-sub" id="db-tab-3" aria-controls="db-page-3">Gender &amp; side</button>
+    <button type="button" role="tab" class="help-tab-sub" id="db-tab-4" aria-controls="db-page-4">Power classes</button>
+  </div>
+  <div class="help-pages">
+  <section class="help-page" role="tabpanel" id="db-page-1" aria-labelledby="db-tab-1" tabindex="0"></section>
+  <section class="help-page" role="tabpanel" id="db-page-2" aria-labelledby="db-tab-2" tabindex="0" hidden></section>
+  <section class="help-page" role="tabpanel" id="db-page-3" aria-labelledby="db-tab-3" tabindex="0" hidden></section>
+  <section class="help-page" role="tabpanel" id="db-page-4" aria-labelledby="db-tab-4" tabindex="0" hidden></section>
+  </div>
+  <div class="help-nav">
+    <button type="button" class="button button-small" id="db-prev">◂ Back</button>
+    <span class="help-count" id="db-count" aria-live="polite">Page 1 of 4</span>
+    <button type="button" class="button button-small button-primary" id="db-next" autofocus>Next ▸</button>
+  </div>
 </dialog>
 
 <dialog id="dialog-stats" class="memo" closedby="any" aria-labelledby="stats-title">
