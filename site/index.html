@@ -170,10 +170,22 @@
   </div>
 </dialog>
 
-<dialog id="dialog-stats" class="memo" closedby="any" aria-labelledby="stats-title">
+<dialog id="dialog-stats" class="memo memo-help" closedby="any" aria-labelledby="stats-title">
   <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
   <h2 id="stats-title">Your record</h2>
-  <div id="stats-body"></div>
+  <div class="help-tabs" role="tablist" aria-label="Which file">
+    <button type="button" role="tab" class="help-tab-main" id="stats-tab-1" aria-controls="stats-page-1">Lineup</button>
+    <button type="button" role="tab" class="help-tab-main" id="stats-tab-2" aria-controls="stats-page-2">Power file</button>
+  </div>
+  <div class="help-pages">
+  <section class="help-page" role="tabpanel" id="stats-page-1" aria-labelledby="stats-tab-1" tabindex="0"></section>
+  <section class="help-page" role="tabpanel" id="stats-page-2" aria-labelledby="stats-tab-2" tabindex="0" hidden></section>
+  </div>
+  <div class="help-nav">
+    <button type="button" class="button button-small" id="stats-prev">◂ Back</button>
+    <span class="help-count" id="stats-count" aria-live="polite">Page 1 of 2</span>
+    <button type="button" class="button button-small button-primary" id="stats-next" autofocus>Next ▸</button>
+  </div>
 </dialog>
 
 <dialog id="dialog-news" class="memo" closedby="any" aria-labelledby="news-title">

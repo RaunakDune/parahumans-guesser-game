@@ -642,9 +642,6 @@ dialog.memo:modal { overscroll-behavior: contain; }
 .dist li { display: grid; grid-template-columns: 3ch 1fr; gap: 8px; align-items: center; margin-bottom: 4px; font-size: var(--s-1); }
 .dist .bar { height: 20px; background: var(--ink); color: var(--manila-light); border-radius: 0 3px 3px 0; padding: 0 6px; display: flex; align-items: center; justify-content: flex-end; min-width: 22px; }
 .dist .bar.is-today { background: var(--stamp-green); }
-.stats-mode { display: flex; gap: 6px; margin: 0 0 16px; flex-wrap: wrap; }
-.stats-mode button { border: 1px solid var(--ink); background: transparent; border-radius: 2px; padding: 4px 10px; cursor: pointer; }
-.stats-mode button[aria-pressed="true"] { background: var(--ink); color: var(--manila-light); }
 .stats-empty { font-style: italic; }
 
 /* ---------------------------------------------------------------- footer */

@@ -415,7 +415,7 @@ function render() {
 // and End move between tabs) and Back / Next buttons. Ids: #<name>-tab-N, #<name>-page-N,
 // #<name>-prev, #<name>-next, #<name>-count, #dialog-<name>.
 
-const PAGERS = { help: { pages: 6, page: 1 }, db: { pages: 4, page: 1 } };
+const PAGERS = { help: { pages: 6, page: 1 }, db: { pages: 4, page: 1 }, stats: { pages: 2, page: 1 } };
 
 function showPage(name, n, focusTab = false) {
   const pager = PAGERS[name];
@@ -453,7 +453,7 @@ function setupPager(name) {
     showPage(name, pager.page + 1);
   });
 }
-function setupHelpPages() { setupPager("help"); setupPager("db"); }
+function setupHelpPages() { setupPager("help"); setupPager("db"); setupPager("stats"); }
 
 // ---------------------------------------------------------------- cape database
 // Counts built from the live data, so they follow every spreadsheet update.
@@ -968,13 +968,16 @@ function statsFor(mode) {
   return { played: days.length, wins: wins.length, current, max, dist, todays: results[today] };
 }
 
-function renderStats(mode) {
+// Stats is a paged window like How to play: page 1 Lineup, page 2 Power file.
+const STATS_PAGES = ["lineup", "power"];
+
+function openStats() {
+  STATS_PAGES.forEach((mode, i) => renderStats(mode, $(`#stats-page-${i + 1}`)));
+  showPage("stats", STATS_PAGES.indexOf(state.mode) + 1);
+}
+
+function renderStats(mode, body) {
   const s = statsFor(mode);
-  const body = $("#stats-body");
-  const switcher = h("div", { class: "stats-mode", role: "group", "aria-label": "Which file" },
-    Object.entries(MODES).map(([key, m]) => h("button", {
-      type: "button", "aria-pressed": String(key === mode), onclick: () => renderStats(key),
-    }, m.tab)));
   const pct = s.played ? Math.round((s.wins / s.played) * 100) : 0;
   const tiles = h("div", { class: "stat-row" },
     [[s.played, "played"], [`${pct}%`, "solved"], [s.current, "current streak"], [s.max, "longest streak"]]
@@ -1001,7 +1004,7 @@ function renderStats(mode) {
         })),
     ];
   }
-  body.replaceChildren(switcher, tiles, ...[chart].flat());
+  body.replaceChildren(h("h3", {}, MODES[mode].tab), tiles, ...[chart].flat());
 }
 
 // ---------------------------------------------------------------- chrome
@@ -1022,7 +1025,7 @@ function wireChrome() {
   });
   document.querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => {
     const which = btn.dataset.open;
-    if (which === "stats") renderStats(state.mode);
+    if (which === "stats") openStats();
     if (which === "help") showHelpPage(1);
     if (which === "db") { fillDatabase(); showPage("db", 1); }
     openDialog($(`#dialog-${which}`));
