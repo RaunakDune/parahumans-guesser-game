@@ -339,6 +339,9 @@ button.day-started { border: 2px solid var(--near); }
 .clue-label { color: var(--ink-soft); }
 .clue-value { font-weight: 700; font-size: var(--s1); line-height: 1.25; overflow-wrap: anywhere; }
 .clue-value .hint { font-weight: 400; font-size: var(--s-1); color: var(--ink-soft); margin-left: 8px; }
+.clue-optional .button { font-weight: 800; }
+.power-note-text { display: block; font-weight: 400; font-size: var(--s0); line-height: 1.5; }
+.power-note-text:focus-visible { outline-offset: 2px !important; }
 .power-text {
   font-size: var(--s1);
   line-height: 1.6;

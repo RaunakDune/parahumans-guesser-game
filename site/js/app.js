@@ -22,6 +22,9 @@ const LINEUP_HINTS = [
   { after: 2, label: "Introduced in", width: 6, value: (c) => seriesText(c) },
   { after: 4, label: "Cluster cape", width: 4, value: (c) => clusterText(c) },
 ];
+// Optional third Lineup note: the power description, offered after this many guesses.
+// Revealing it changes nothing about the score, stats or the shared result.
+const POWER_NOTE_AFTER = 6;
 const MARK = { match: "✓", near: "≈", miss: "✗" };
 const MARK_WORD = { match: "matches", near: "partly matches, sharing a power class", miss: "doesn't match" };
 const SHARE_TILE = { match: "🟩", near: "🟨", miss: "🟥" };
@@ -663,15 +666,49 @@ function redaction(chars, label) {
   return h("span", { class: "redaction", style: `width:${width}ch`, role: "img", "aria-label": label });
 }
 
-function renderPower(puzzle) {
-  const { progress, answer } = puzzle;
-  const misses = progress.g.length - (progress.won ? 1 : 0);
-  const pieces = (answer.powerClue || "").split("▇▇▇▇");
+// The Power file's description of a cape, names blacked out.
+function powerTextNodes(cape) {
+  const pieces = (cape.powerClue || "").split("▇▇▇▇");
   const text = [];
   pieces.forEach((piece, i) => {
     text.push(piece);
     if (i < pieces.length - 1) text.push(redaction(7, "a name, blacked out"));
   });
+  return text;
+}
+
+// Lineup note 3: hidden until 6 guesses, then a button the player may press (or ignore).
+function powerNote(puzzle) {
+  const { progress, answer } = puzzle;
+  const shown = progress.done || progress.powerShown;
+  let value;
+  if (!answer.powerClue) {
+    value = shown || progress.g.length >= POWER_NOTE_AFTER ? h("span", { class: "hint" }, "Not on file") : null;
+  } else if (shown) {
+    value = h("span", { class: "power-note-text", id: "power-note-text", tabindex: "-1" }, powerTextNodes(answer));
+  } else if (progress.g.length >= POWER_NOTE_AFTER) {
+    value = h("button", { type: "button", class: "button button-small", id: "reveal-power", onclick: () => revealPowerNote(puzzle) },
+      "Reveal power description?");
+  }
+  value ||= [redaction(10, "Power description, hidden"), h("span", { class: "hint" }, `optional, after ${POWER_NOTE_AFTER} guesses`)];
+  return h("li", { class: "clue clue-optional" },
+    h("span", { class: "clue-no" }, 3),
+    h("span", { class: "clue-label" }, "Power description"),
+    h("span", { class: "clue-value" }, value));
+}
+
+function revealPowerNote(puzzle) {
+  puzzle.progress.powerShown = true;
+  puzzle.save();
+  render();
+  announce("Power description revealed. Names are blacked out.");
+  $("#power-note-text")?.focus({ preventScroll: true });
+}
+
+function renderPower(puzzle) {
+  const { progress, answer } = puzzle;
+  const misses = progress.g.length - (progress.won ? 1 : 0);
+  const text = powerTextNodes(answer);
   const hints = notesList(POWER_HINTS.map((x) => ({ ...x, width: BAR_WIDTH[x.field] || 8 })), misses, progress.done,
     (hint) => hint.field === "power" ? powerWithSubRatings(answer) : display(hint.field, answer),
     (hint) => labelFor(hint.field));
@@ -723,6 +760,7 @@ function renderLineup(puzzle) {
     : h("p", { class: "ruled-out" }, "Name any cape to put them in the lineup and compare them with the subject.");
   const misses = progress.g.length - (progress.won ? 1 : 0);
   const notes = notesList(LINEUP_HINTS, misses, progress.done, (hint) => hint.value(answer), (hint) => hint.label);
+  notes.append(powerNote(puzzle));
   return [notes, ...guessArea(puzzle), table];
 }
 
@@ -1072,7 +1110,7 @@ if (!("closedBy" in HTMLDialogElement.prototype)) {
 // Players who accepted spoilers before the beta notice existed see the beta part once on its own.
 // "What's new" pop-up: shown once to returning players for each NEWS_ID.
 // For the next round of changes, rewrite #dialog-news in index.html and bump NEWS_ID.
-const NEWS_ID = "2026-10-29";
+const NEWS_ID = "2026-11-27";
 
 function markNewsSeen() {
   if (store.data.newsSeen === NEWS_ID) return;

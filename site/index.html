@@ -97,6 +97,7 @@
     <ul>
       <li>After 2 wrong guesses: which story introduced the cape (<cite>Worm</cite>, <cite>PRT Quest</cite>, <cite>Glow-worm</cite>, <cite>Ward</cite> or <cite>PHO Sunday</cite>).</li>
       <li>After 4: whether they're a cluster cape.</li>
+      <li>After 6 guesses, if you like: the cape's power description, names blacked out. It's optional and doesn't change your score or shared result.</li>
       <li>After 8: you can reveal the answer, though the file then counts as unsolved.</li>
     </ul>
     <p>First appearance counts through the stories in that order. <cite>PRT Quest</cite> and <cite>PHO Sunday</cite> each count as a single step.</p>
@@ -190,19 +191,13 @@
 
 <dialog id="dialog-news" class="memo" closedby="any" aria-labelledby="news-title">
   <form method="dialog" class="memo-close"><button aria-label="Close">Close</button></form>
-  <h2 id="news-title">New in the Lineup</h2>
-  <p>Some capes were too hard to tell apart, so the Lineup has a seventh detail.</p>
-  <h3>First appearance</h3>
-  <p>Every guess now shows the arc where that cape first appears. An arrow tells you whether the subject first
-     appears later (▲) or earlier (▼), and the tile turns amber when you're within 2 arcs. Arcs run on in reading
-     order through <cite>Worm</cite>, <cite>PRT Quest</cite>, <cite>Glow-worm</cite>, <cite>Ward</cite> and <cite>PHO Sunday</cite>.</p>
-  <h3>Also new this week</h3>
-  <ul>
-    <li>After 2 wrong guesses, <strong>Introduced in</strong> tells you which story the cape first appeared in:
-        <cite>Worm</cite>, <cite>PRT Quest</cite>, <cite>Glow-worm</cite>, <cite>Ward</cite> or <cite>PHO Sunday</cite>.</li>
-    <li>After 4 wrong guesses, <strong>Cluster cape</strong> tells you whether they're part of a cluster.</li>
-    <li>Truly stuck? After 8 guesses, you can <strong>reveal the answer</strong>. The file counts as unsolved.</li>
-  </ul>
+  <h2 id="news-title">New optional hint in the Lineup</h2>
+  <p>Players asked for one more clue on the hard days, so the Lineup now has a third note.</p>
+  <h3>Power description</h3>
+  <p>After 6 guesses, a <strong>Reveal power description?</strong> button appears as the third note. Press it to read the
+     cape's power, with names blacked out, just like the Power file.</p>
+  <p>It's entirely optional: keep guessing without it if you prefer. Using it doesn't change your score, your stats or
+     your shared result.</p>
   <form method="dialog" class="memo-actions">
     <button value="ok" class="button button-primary" autofocus>Back to the lineup</button>
   </form>
